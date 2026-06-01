@@ -933,10 +933,12 @@
     const BACKGROUND_LAYER_ZOOM = 1.08;
     const GAMEPLAY_SPRITE_MAX_W = 90;
     const GAMEPLAY_SPRITE_MAX_H = 72;
+    const GAMEPLAY_CACHE_BOX = 144;
     let leaderboardDb = null;
     let leaderboardApi = null;
     let leaderboardInitPromise = null;
     let backgroundLayerCache = null;
+    let gameplaySpriteCacheScale = 0;
 
     const state = {
       phase: "intro",
@@ -1492,11 +1494,69 @@
       state.height = rect.height;
       ctx.setTransform(scale, 0, 0, scale, 0, 0);
       resetBackgroundLayerCache();
+      resetGameplaySpriteCache();
       seedStars();
     }
 
     function resetBackgroundLayerCache() {
       backgroundLayerCache = null;
+    }
+
+    function resetGameplaySpriteCache() {
+      gameplaySpriteCacheScale = 0;
+      for (const character of characters) {
+        character.gameplayCache = null;
+      }
+    }
+
+    function prepareGameplaySprite(character) {
+      const image = character.image;
+      if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
+        return null;
+      }
+
+      const spriteW = gameplaySpriteWidth(character);
+      const spriteH = spriteW * (image.naturalHeight / image.naturalWidth);
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      const canvasW = Math.ceil(GAMEPLAY_CACHE_BOX * scale);
+      const canvasH = Math.ceil(GAMEPLAY_CACHE_BOX * scale);
+      const cacheCanvas = document.createElement("canvas");
+      cacheCanvas.width = canvasW;
+      cacheCanvas.height = canvasH;
+      const cacheCtx = cacheCanvas.getContext("2d");
+      cacheCtx.imageSmoothingEnabled = true;
+      cacheCtx.imageSmoothingQuality = "high";
+      cacheCtx.scale(scale, scale);
+      cacheCtx.translate(GAMEPLAY_CACHE_BOX / 2, GAMEPLAY_CACHE_BOX / 2);
+      cacheCtx.shadowColor = "rgba(156, 255, 109, 0.45)";
+      cacheCtx.shadowBlur = 14;
+      cacheCtx.drawImage(image, -spriteW * 0.5, -spriteH * 0.5, spriteW, spriteH);
+
+      const cache = {
+        source: cacheCanvas,
+        width: GAMEPLAY_CACHE_BOX,
+        height: GAMEPLAY_CACHE_BOX
+      };
+      character.gameplayCache = cache;
+      if (typeof createImageBitmap === "function") {
+        createImageBitmap(cacheCanvas).then((bitmap) => {
+          if (character.gameplayCache === cache) {
+            cache.source = bitmap;
+          }
+        }).catch(() => {
+          cache.source = cacheCanvas;
+        });
+      }
+      return character.gameplayCache;
+    }
+
+    function getGameplaySpriteCache(character) {
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      if (gameplaySpriteCacheScale !== scale) {
+        resetGameplaySpriteCache();
+        gameplaySpriteCacheScale = scale;
+      }
+      return character.gameplayCache || prepareGameplaySprite(character);
     }
 
     function seedStars() {
@@ -2443,6 +2503,15 @@
       const p = state.player;
       const character = characters[state.selectedCharacter] || characters[0];
       if (character.image.complete && character.image.naturalWidth) {
+        const cached = getGameplaySpriteCache(character);
+        if (cached) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.drawImage(cached.source, -cached.width * 0.5, -cached.height * 0.5, cached.width, cached.height);
+          ctx.restore();
+          return;
+        }
         drawCharacterImage(character, p.x, p.y, gameplaySpriteWidth(character), p.rotation, true);
         return;
       }
