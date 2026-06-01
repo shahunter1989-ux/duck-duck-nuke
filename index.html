@@ -1,0 +1,2958 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Duck Duck Nuke by Wulfzx.Underground</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --screen: #9cff6d;
+      --screen-soft: rgba(156, 255, 109, 0.22);
+      --amber: #ffc857;
+      --danger: #ff5d4d;
+      --metal: #1d2620;
+      --panel: #0b130d;
+      --panel-2: #101c13;
+      --ink: #d9ffd0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.92), rgba(215, 215, 215, 0.78) 44%, #060806 100%),
+        #111;
+      color: var(--ink);
+      font-family: "Courier New", Courier, monospace;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: var(--app-height, 100dvh);
+      display: grid;
+      place-items: center;
+      padding: 10px;
+    }
+
+    .shell {
+      position: relative;
+      width: min(calc(100vw - 20px), calc((100vh - 20px) * 1.776833), 1360px);
+      aspect-ratio: 1672 / 941;
+      background: url("assets/pip-boy-ui-shell.png") center / contain no-repeat;
+      filter: drop-shadow(0 28px 48px rgba(0, 0, 0, 0.42));
+    }
+
+    .game-frame {
+      position: absolute;
+      left: 29.2%;
+      top: 18.2%;
+      width: 34.4%;
+      height: 50.6%;
+      padding: 0;
+    }
+
+    .screen-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      border-radius: 8% / 10%;
+      overflow: hidden;
+      background: #061008;
+      box-shadow:
+        inset 0 0 18px rgba(156, 255, 109, 0.18),
+        inset 0 0 90px rgba(0, 0, 0, 0.58);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: auto;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .scanlines {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.035) 0,
+          rgba(255, 255, 255, 0.035) 1px,
+          transparent 1px,
+          transparent 4px
+        );
+      mix-blend-mode: screen;
+      opacity: 0.5;
+    }
+
+    .vignette {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.65);
+    }
+
+    .side-panel {
+      display: none !important;
+      border: 2px solid #4f6640;
+      border-radius: 8px;
+      padding: 14px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent 24%),
+        var(--panel);
+      box-shadow:
+        inset 0 0 0 3px #1a2819,
+        0 24px 60px rgba(0, 0, 0, 0.32);
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .brand {
+      border: 1px solid rgba(156, 255, 109, 0.28);
+      border-radius: 6px;
+      padding: 12px;
+      background: rgba(156, 255, 109, 0.05);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.05;
+      color: var(--screen);
+      text-shadow: 0 0 16px rgba(156, 255, 109, 0.5);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: rgba(217, 255, 208, 0.72);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .meter {
+      border: 1px solid rgba(156, 255, 109, 0.24);
+      border-radius: 6px;
+      background: var(--panel-2);
+      padding: 10px;
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: rgba(217, 255, 208, 0.74);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .bar {
+      position: relative;
+      height: 34px;
+      overflow: visible;
+      background: url("assets/core-charger-bar.png") center / 100% 100% no-repeat;
+    }
+
+    .bar > span {
+      position: absolute;
+      left: 9.5%;
+      top: 31%;
+      display: block;
+      height: 28%;
+      width: 76%;
+      transform-origin: left center;
+      background: linear-gradient(90deg, var(--danger), var(--amber), var(--screen));
+      border-radius: 2px;
+      box-shadow: 0 0 12px rgba(156, 255, 109, 0.28);
+      opacity: 0.82;
+      transition: transform 120ms linear;
+    }
+
+    .controls {
+      display: grid;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    button {
+      min-height: 44px;
+      border: 1px solid rgba(156, 255, 109, 0.36);
+      border-radius: 6px;
+      background: rgba(156, 255, 109, 0.08);
+      color: var(--screen);
+      font: 700 14px/1 "Courier New", Courier, monospace;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 18px rgba(156, 255, 109, 0.06);
+    }
+
+    button:hover,
+    button:focus-visible {
+      outline: none;
+      background: rgba(156, 255, 109, 0.16);
+      box-shadow: 0 0 0 3px rgba(156, 255, 109, 0.15), inset 0 0 18px rgba(156, 255, 109, 0.08);
+    }
+
+    .readout {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+      color: rgba(217, 255, 208, 0.76);
+    }
+
+    .readout strong {
+      color: var(--screen);
+      font-weight: 700;
+    }
+
+    .mobile-actions {
+      display: none;
+    }
+
+    .mobile-cabinet-hud,
+    .mobile-logo {
+      display: none;
+    }
+
+    @media (max-width: 820px) {
+      body {
+        padding: 8px;
+        overflow: hidden;
+      }
+
+      .shell {
+        width: min(calc(100vw - 16px), calc((100vh - 16px) * 1.776833));
+      }
+
+      .game-frame {
+        min-height: 0;
+      }
+
+      .screen-wrap {
+        min-height: auto;
+      }
+
+      .controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 820px), (max-height: 520px), (hover: none) and (pointer: coarse) {
+      body {
+        height: 100vh;
+        height: 100dvh;
+        height: var(--app-height, 100dvh);
+        padding:
+          max(8px, env(safe-area-inset-top))
+          max(8px, env(safe-area-inset-right))
+          max(8px, env(safe-area-inset-bottom))
+          max(8px, env(safe-area-inset-left));
+        background:
+          radial-gradient(circle at 50% 22%, rgba(126, 91, 56, 0.44), rgba(6, 6, 5, 0.94) 64%),
+          #050605;
+      }
+
+      .shell {
+        width: min(calc(100vw - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right))), calc((var(--app-height, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))) * 0.5628));
+        height: auto;
+        max-width: none;
+        aspect-ratio: 941 / 1672;
+        background:
+          linear-gradient(180deg, rgba(255, 202, 97, 0.09), rgba(0, 0, 0, 0) 11%, rgba(0, 0, 0, 0.2) 100%),
+          radial-gradient(circle at 50% 48%, rgba(122, 72, 40, 0.18), rgba(0, 0, 0, 0) 45%),
+          #12110d;
+        border: clamp(5px, 1.2vw, 8px) solid #3b3426;
+        border-radius: 10px;
+        box-shadow:
+          inset 0 0 0 3px #0a0908,
+          inset 0 0 0 8px rgba(174, 129, 55, 0.18),
+          inset 0 0 70px rgba(0, 0, 0, 0.78),
+          0 18px 42px rgba(0, 0, 0, 0.56);
+        filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.5));
+      }
+
+      .game-frame {
+        left: 3.2%;
+        top: 13%;
+        right: auto;
+        bottom: auto;
+        width: 93.6%;
+        height: 76.4%;
+        min-height: 0;
+        z-index: 1;
+      }
+
+      .screen-wrap {
+        border: 2px solid rgba(28, 24, 17, 0.96);
+        border-radius: 5px;
+        background: #13100b;
+        box-shadow:
+          inset 0 0 0 2px rgba(174, 129, 55, 0.28),
+          inset 0 0 55px rgba(0, 0, 0, 0.35);
+      }
+
+      .scanlines {
+        display: none;
+      }
+
+      .vignette {
+        box-shadow: inset 0 0 48px rgba(0, 0, 0, 0.42);
+      }
+
+      .mobile-cabinet-hud {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: block;
+        pointer-events: none;
+        font-family: "Courier New", Courier, monospace;
+      }
+
+      .mobile-panel {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        min-width: 0;
+        color: var(--screen);
+        text-align: center;
+        text-transform: uppercase;
+        background:
+          linear-gradient(180deg, rgba(65, 42, 24, 0.96), rgba(15, 13, 10, 0.98)),
+          #17120c;
+        border: 2px solid #6d4f2b;
+        border-radius: 7px;
+        box-shadow:
+          inset 0 0 0 2px rgba(0, 0, 0, 0.72),
+          inset 0 -7px 0 rgba(0, 0, 0, 0.28),
+          0 3px 0 rgba(0, 0, 0, 0.55);
+        text-shadow: 0 0 8px rgba(156, 255, 109, 0.45);
+      }
+
+      .mobile-panel::after,
+      .mobile-charge::after,
+      .mobile-actions button::after,
+      .pip-nav button::after {
+        content: "";
+        position: absolute;
+        left: 8%;
+        right: 8%;
+        bottom: 5px;
+        height: 8px;
+        background: repeating-linear-gradient(135deg, #ddb143 0 8px, #1a1710 8px 16px);
+        opacity: 0.86;
+        border-radius: 2px;
+      }
+
+      .mobile-score {
+        left: 5%;
+        top: 2.8%;
+        width: 22%;
+        height: 8.8%;
+      }
+
+      .mobile-best {
+        right: 5%;
+        top: 2.8%;
+        width: 22%;
+        height: 8.8%;
+      }
+
+      .mobile-distance {
+        left: 31%;
+        bottom: 1.7%;
+        width: 38%;
+        height: 5.8%;
+        font-size: clamp(18px, 5vw, 28px);
+        letter-spacing: 0;
+      }
+
+      .mobile-panel-label {
+        display: block;
+        font-weight: 700;
+        font-size: clamp(12px, 3.2vw, 18px);
+        line-height: 1;
+      }
+
+      .mobile-panel-value {
+        display: block;
+        margin-top: 4px;
+        color: #b7ff81;
+        font-weight: 700;
+        font-size: clamp(20px, 6vw, 34px);
+        line-height: 1;
+      }
+
+      .mobile-charge {
+        position: absolute;
+        left: 29%;
+        top: 1.6%;
+        width: 42%;
+        height: 12%;
+        color: var(--screen);
+        text-align: center;
+        text-transform: uppercase;
+        background:
+          linear-gradient(180deg, rgba(70, 46, 26, 0.96), rgba(16, 13, 9, 0.98)),
+          #17120c;
+        border: 2px solid #6d4f2b;
+        border-radius: 7px;
+        box-shadow:
+          inset 0 0 0 2px rgba(0, 0, 0, 0.72),
+          0 3px 0 rgba(0, 0, 0, 0.55);
+      }
+
+      .mobile-charge-title {
+        position: absolute;
+        left: 14%;
+        right: 14%;
+        top: 5%;
+        padding: 1px 3px;
+        background: rgba(0, 0, 0, 0.52);
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: clamp(10px, 2.8vw, 15px);
+        line-height: 1.1;
+      }
+
+      .mobile-charge-track {
+        position: absolute;
+        left: 8%;
+        right: 8%;
+        top: 35%;
+        height: 26%;
+        border: 2px solid #0b0a08;
+        border-radius: 3px;
+        overflow: hidden;
+        background: #160e0b;
+      }
+
+      .mobile-charge-fill {
+        display: block;
+        width: 100%;
+        height: 100%;
+        transform-origin: left center;
+        background: linear-gradient(90deg, #ff5d4d, #ffc857 42%, #9cff6d);
+        box-shadow: 0 0 12px rgba(156, 255, 109, 0.52);
+      }
+
+      .mobile-charge-meta {
+        position: absolute;
+        left: 13%;
+        right: 13%;
+        bottom: 12%;
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        color: #ffc857;
+        font-weight: 700;
+        font-size: clamp(10px, 3vw, 15px);
+        line-height: 1;
+      }
+
+      .mobile-logo {
+        position: absolute;
+        left: 38%;
+        bottom: 7.2%;
+        z-index: 2;
+        display: block;
+        width: 24%;
+        height: auto;
+        max-height: 7%;
+        object-fit: contain;
+        opacity: 0.9;
+        pointer-events: none;
+      }
+
+      .mobile-actions {
+        position: absolute;
+        left: 2.6%;
+        right: 2.6%;
+        bottom: 1.2%;
+        z-index: 5;
+        display: grid;
+        grid-template-columns: 1fr 1.85fr 1fr;
+        gap: 8px;
+        pointer-events: auto;
+      }
+
+      .mobile-actions button {
+        position: relative;
+        min-height: clamp(46px, 8.2vh, 64px);
+        border: 2px solid #6d4f2b;
+        border-radius: 7px;
+        background:
+          linear-gradient(180deg, rgba(66, 43, 25, 0.94), rgba(15, 13, 10, 0.98)),
+          #17120c;
+        color: #9cff6d;
+        box-shadow:
+          inset 0 0 0 2px rgba(0, 0, 0, 0.72),
+          0 3px 0 rgba(0, 0, 0, 0.55);
+        touch-action: manipulation;
+      }
+
+      .mobile-actions .boost-button {
+        font-size: clamp(16px, 5vw, 22px);
+        background:
+          linear-gradient(180deg, rgba(88, 55, 25, 0.96), rgba(18, 15, 10, 0.98)),
+          #21140c;
+      }
+
+      .sound-button {
+        top: auto;
+        right: 5.6%;
+        bottom: 8.2%;
+        z-index: 7;
+        min-height: 24px;
+        padding: 0 8px;
+        border-color: #6d4f2b;
+        background: rgba(15, 13, 10, 0.92);
+        font-size: clamp(9px, 2.6vw, 12px);
+      }
+    }
+
+    @media (max-height: 520px) and (orientation: landscape) {
+      .shell {
+        width: min(calc(100vw - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right))), calc((var(--app-height, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))) * 1.7768));
+        aspect-ratio: 1672 / 941;
+      }
+
+      .game-frame {
+        left: 3.1%;
+        top: 17%;
+        width: 73%;
+        height: 70.2%;
+      }
+
+      .mobile-score {
+        left: 3.5%;
+        top: 2.7%;
+        width: 16%;
+        height: 12%;
+      }
+
+      .mobile-best {
+        left: 61.5%;
+        right: auto;
+        top: 2.7%;
+        width: 16%;
+        height: 12%;
+      }
+
+      .mobile-charge {
+        left: 21%;
+        top: 2%;
+        width: 38%;
+        height: 13%;
+      }
+
+      .mobile-panel-label {
+        font-size: clamp(10px, 2.5vh, 14px);
+      }
+
+      .mobile-panel-value {
+        font-size: clamp(16px, 6vh, 28px);
+      }
+
+      .pip-nav {
+        right: 2%;
+        top: 19%;
+        width: 18%;
+      }
+
+      .pip-nav button {
+        min-height: clamp(32px, 13vh, 48px);
+        font-size: clamp(10px, 3.8vh, 14px);
+      }
+
+      .mobile-actions {
+        left: 2%;
+        right: 2%;
+        bottom: 1.8%;
+        grid-template-columns: 1fr 1.4fr 1fr;
+      }
+
+      .mobile-actions button {
+        min-height: clamp(32px, 13vh, 48px);
+        font-size: clamp(10px, 3.8vh, 14px);
+      }
+
+      .mobile-actions .boost-button {
+        font-size: clamp(12px, 4.5vh, 17px);
+      }
+
+      .mobile-distance {
+        left: 37%;
+        bottom: 2.1%;
+        width: 26%;
+        height: 9%;
+        font-size: clamp(16px, 6vh, 28px);
+      }
+
+      .mobile-logo {
+        display: none;
+      }
+
+      .sound-button {
+        right: 3.2%;
+        bottom: 24%;
+      }
+    }
+
+    .sound-button {
+      position: fixed;
+      right: max(12px, env(safe-area-inset-right));
+      top: max(12px, env(safe-area-inset-top));
+      z-index: 6;
+      min-height: 38px;
+      padding: 0 12px;
+      background: rgba(5, 12, 6, 0.82);
+      backdrop-filter: blur(8px);
+      font-size: 12px;
+      touch-action: manipulation;
+    }
+
+    .pip-nav {
+      position: absolute;
+      left: 84%;
+      top: 17.6%;
+      z-index: 4;
+      display: block;
+      width: 6.5%;
+      height: 13.2%;
+      pointer-events: auto;
+    }
+
+    .pip-nav button {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 18%;
+      min-height: 0;
+      border: 0;
+      border-radius: 3px;
+      background: transparent;
+      color: transparent;
+      box-shadow: none;
+      touch-action: manipulation;
+    }
+
+    .pip-stat {
+      top: 0;
+    }
+
+    .pip-data {
+      top: 43%;
+    }
+
+    .pip-radio {
+      top: 86%;
+    }
+
+    .pip-nav button:hover,
+    .pip-nav button:focus-visible {
+      outline: 1px solid rgba(156, 255, 109, 0.68);
+      background: rgba(156, 255, 109, 0.12);
+    }
+
+    @media (max-width: 820px), (max-height: 520px), (hover: none) and (pointer: coarse) {
+      .pip-nav {
+        left: auto;
+        right: 2.8%;
+        top: 14.8%;
+        z-index: 6;
+        display: grid;
+        width: 19.5%;
+        height: auto;
+        gap: 8px;
+      }
+
+      .pip-nav button {
+        position: relative;
+        width: auto;
+        height: auto;
+        min-height: clamp(44px, 7vh, 62px);
+        border: 2px solid #6d4f2b;
+        border-radius: 7px;
+        background:
+          linear-gradient(180deg, rgba(66, 43, 25, 0.94), rgba(15, 13, 10, 0.98)),
+          #17120c;
+        color: var(--screen);
+        font-size: clamp(12px, 3.5vw, 17px);
+        text-shadow: 0 0 8px rgba(156, 255, 109, 0.52);
+        box-shadow:
+          inset 0 0 0 2px rgba(0, 0, 0, 0.72),
+          0 3px 0 rgba(0, 0, 0, 0.55);
+      }
+
+      body[data-phase="intro"] .pip-nav,
+      body[data-phase="select"] .pip-nav {
+        display: none;
+      }
+
+      .sound-button {
+        top: auto;
+        right: 5.6%;
+        bottom: 8.2%;
+        width: auto;
+        height: auto;
+        min-height: 24px;
+        padding: 0 8px;
+        border-color: #6d4f2b;
+        background: rgba(15, 13, 10, 0.92);
+        font-size: clamp(9px, 2.6vw, 12px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell" aria-label="Duck Duck Nuke game">
+    <section class="game-frame">
+      <div class="screen-wrap">
+        <canvas id="game" width="960" height="640" aria-label="Playable jetpack side-scroller"></canvas>
+        <div class="scanlines"></div>
+        <div class="vignette"></div>
+      </div>
+    </section>
+
+    <div class="mobile-cabinet-hud" aria-hidden="true">
+      <div class="mobile-panel mobile-score">
+        <span>
+          <span class="mobile-panel-label">Score</span>
+          <span id="mobileScoreText" class="mobile-panel-value">0</span>
+        </span>
+      </div>
+      <div class="mobile-charge">
+        <div class="mobile-charge-title">Core Charge</div>
+        <div class="mobile-charge-track"><span id="mobileChargeBar" class="mobile-charge-fill"></span></div>
+        <div class="mobile-charge-meta">
+          <span id="mobileChargeText">100%</span>
+          <span id="mobileCapsText">Caps 0/3</span>
+        </div>
+      </div>
+      <div class="mobile-panel mobile-best">
+        <span>
+          <span class="mobile-panel-label">Best</span>
+          <span id="mobileBestText" class="mobile-panel-value">0</span>
+        </span>
+      </div>
+      <div class="mobile-panel mobile-distance">
+        <span id="mobileDistanceText">0</span>
+      </div>
+    </div>
+
+    <img class="mobile-logo" src="assets/duck-duck-nuke-mobile-logo.png" alt="">
+
+    <nav class="pip-nav" aria-label="Pip-Boy quick controls">
+      <button id="statControl" class="pip-stat" type="button" title="Start">Start</button>
+      <button id="dataControl" class="pip-data" type="button" title="Pause or resume">Pause</button>
+      <button id="radioControl" class="pip-radio" type="button" title="Home">Home</button>
+    </nav>
+
+    <aside class="side-panel" aria-label="Game controls and status">
+      <div class="brand">
+        <h1>DUCK DUCK<br>NUKE</h1>
+        <div class="subtitle">by Wulfzx.Underground. Thread the ruins, boost through the wasteland, grab WZX caps, and survive the barrels.</div>
+      </div>
+
+      <div class="meter">
+        <div class="meter-label"><span>Core Charge</span><span id="chargeText">100%</span></div>
+        <div class="bar"><span id="chargeBar"></span></div>
+        <div class="meter-label"><span>Caps</span><span id="capsText">0/3</span></div>
+      </div>
+
+      <div class="readout">
+        <div>Mode: <strong id="modeText">Ready</strong></div>
+        <div>Score: <strong id="scoreText">0</strong></div>
+        <div>Best: <strong id="bestText">0</strong></div>
+        <div>Controls: <strong>Space / Click / Tap</strong></div>
+        <div>Pause: <strong>P</strong></div>
+      </div>
+
+      <div class="controls">
+        <button id="startButton" type="button">Start</button>
+        <button id="pauseButton" type="button">Pause</button>
+      </div>
+    </aside>
+
+    <div class="mobile-actions" aria-label="Mobile game controls">
+      <button id="mobileRestartButton" type="button">Start</button>
+      <button id="mobileBoostButton" class="boost-button" type="button">Boost</button>
+      <button id="mobilePauseButton" type="button">Pause</button>
+    </div>
+
+    <button id="soundButton" class="sound-button" type="button" aria-pressed="true">Sound On</button>
+  </main>
+
+  <script>
+    const canvas = document.querySelector("#game");
+    const ctx = canvas.getContext("2d");
+    const chargeBar = document.querySelector("#chargeBar");
+    const chargeText = document.querySelector("#chargeText");
+    const capsText = document.querySelector("#capsText");
+    const modeText = document.querySelector("#modeText");
+    const scoreText = document.querySelector("#scoreText");
+    const bestText = document.querySelector("#bestText");
+    const startButton = document.querySelector("#startButton");
+    const pauseButton = document.querySelector("#pauseButton");
+    const mobileRestartButton = document.querySelector("#mobileRestartButton");
+    const mobileBoostButton = document.querySelector("#mobileBoostButton");
+    const mobilePauseButton = document.querySelector("#mobilePauseButton");
+    const mobileScoreText = document.querySelector("#mobileScoreText");
+    const mobileBestText = document.querySelector("#mobileBestText");
+    const mobileChargeText = document.querySelector("#mobileChargeText");
+    const mobileChargeBar = document.querySelector("#mobileChargeBar");
+    const mobileCapsText = document.querySelector("#mobileCapsText");
+    const mobileDistanceText = document.querySelector("#mobileDistanceText");
+    const soundButton = document.querySelector("#soundButton");
+    const statControl = document.querySelector("#statControl");
+    const dataControl = document.querySelector("#dataControl");
+    const radioControl = document.querySelector("#radioControl");
+    const playerSprite = new Image();
+    playerSprite.src = "assets/pip-boy-rocket.png";
+    const duckySprite = new Image();
+    duckySprite.src = "assets/ducky.png";
+    const amySprite = new Image();
+    amySprite.src = "assets/amy-nuka-nightmare.png";
+    const mayraSprite = new Image();
+    mayraSprite.src = "assets/mayra-del-yermo.png";
+    const coffeeSprite = new Image();
+    coffeeSprite.src = "assets/coffee.png";
+    const mm777Sprite = new Image();
+    mm777Sprite.src = "assets/mm777.png";
+    const bigzxSprite = new Image();
+    bigzxSprite.src = "assets/bigzx.png";
+    const wyldwolfSprite = new Image();
+    wyldwolfSprite.src = "assets/wyldwolf.png";
+    const painterSprite = new Image();
+    painterSprite.src = "assets/the-painter.png";
+    const roccoSprite = new Image();
+    roccoSprite.src = "assets/rocco.png";
+    const pettywiselolSprite = new Image();
+    pettywiselolSprite.src = "assets/pettywiselol.png";
+    const backgroundSpritePaths = [
+      "assets/wasteland-background-clean.png",
+      "assets/wulfzx-underground-background.png",
+      "assets/wulfzx-nightfall-background.png",
+      "assets/wulfzx-moon-background.png",
+      "assets/wulfzx-storm-background.png",
+      "assets/wulfzx-snow-background.png",
+      "assets/wulfzx-bright-day-background.png",
+      "assets/wulfzx-sunset-background.png",
+      "assets/wulfzx-golden-hour-background.png",
+      "assets/wulfzx-wcx-day-background.png",
+      "assets/wulfzx-green-storm-background.png"
+    ];
+    const backgroundImages = backgroundSpritePaths.map((src) => {
+      const image = new Image();
+      image.src = src;
+      return image;
+    });
+    const obstacleSpritePaths = [
+      "assets/wzx-radiation-barrel.png",
+      "assets/wzx-tnt-barrel.png"
+    ];
+    const obstacleSpriteOffsets = [0, -1.5];
+    const obstacleSprites = obstacleSpritePaths.map((src) => {
+      const image = new Image();
+      image.src = src;
+      return image;
+    });
+    const coreChargerImage = new Image();
+    coreChargerImage.src = "assets/core-charger-bar.png";
+    const gameOverImage = new Image();
+    gameOverImage.src = "assets/game-over-screen.png";
+    const introImage = new Image();
+    introImage.src = "assets/duck-duck-nuke-intro.jpg";
+    const coinSpritePaths = [
+      "assets/wzx-red-cap.png"
+    ];
+    const coinSprites = coinSpritePaths.map((src) => {
+      const image = new Image();
+      image.src = src;
+      return image;
+    });
+    const characters = [
+      { id: "painter", name: "The Painter", readyName: "The Painter", titleLines: ["THE", "PAINTER"], image: painterSprite, spriteW: 108, radius: 18 },
+      { id: "bigzx", name: "Big ZX", readyName: "Big ZX", titleLines: ["BIG ZX"], image: bigzxSprite, spriteW: 80, radius: 20 },
+      { id: "wyldwolf", name: "WyldWolf", readyName: "WyldWolf", titleLines: ["WYLDWOLF"], image: wyldwolfSprite, spriteW: 92, radius: 20 },
+      { id: "ducky", name: "Ducky", readyName: "Ducky", titleLines: ["DUCKY"], image: duckySprite, spriteW: 84, radius: 19 },
+      { id: "amy", name: "Amy the Nuka Nightmare", readyName: "Amy", titleLines: ["AMY THE", "NUKA NIGHTMARE"], image: amySprite, spriteW: 86, radius: 20 },
+      { id: "mayra", name: "Mayra Del Yermo", readyName: "Mayra", titleLines: ["MAYRA", "DEL YERMO"], image: mayraSprite, spriteW: 88, radius: 20 },
+      { id: "coffee", name: "Coffee", readyName: "Coffee", titleLines: ["COFFEE"], image: coffeeSprite, spriteW: 82, radius: 18 },
+      { id: "mm777", name: "MM777", readyName: "MM777", titleLines: ["MM777"], image: mm777Sprite, spriteW: 84, radius: 19 },
+      { id: "rocco", name: "Rocco", readyName: "Rocco", titleLines: ["ROCCO"], image: roccoSprite, spriteW: 92, radius: 20 },
+      { id: "pettywiselol", name: "PettyWiselol", readyName: "PettyWiselol", titleLines: ["PETTY", "WISELOL"], image: pettywiselolSprite, spriteW: 92, radius: 20 }
+    ];
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDYpSDz5PTYPcgchueaUVifIygwpoJFOTM",
+      authDomain: "pip-boy-jetpack-run.firebaseapp.com",
+      projectId: "pip-boy-jetpack-run",
+      storageBucket: "pip-boy-jetpack-run.firebasestorage.app",
+      messagingSenderId: "31464266741",
+      appId: "1:31464266741:web:f925cebb22928fbeaa9ebc"
+    };
+    const LEADERBOARD_ROOT = "leaderboards";
+    const LEADERBOARD_KEY_PREFIX = "duck-duck-nuke-";
+    const FIREBASE_VERSION = "10.12.4";
+    const LEADERBOARD_LIMIT = 5;
+    const BOOST_COST = 0.25;
+    const CAP_MILESTONE = 3;
+    const CAP_MILESTONE_CHARGE = 0.25;
+    const CAP_FIXED_RECHARGE_CHANCE = 0.25;
+    const CHARACTERS_PER_PAGE = 8;
+    const SELECT_DOUBLE_ACTIVATE_MS = 500;
+    const SELECT_SWIPE_MIN_PX = 45;
+    const BACKGROUND_JUMPS_PER_SCENE = 8;
+    const BACKGROUND_TRANSITION_SECONDS = 1.8;
+    const BACKGROUND_LAYER_ZOOM = 1.08;
+    const GAMEPLAY_SPRITE_MAX_W = 90;
+    const GAMEPLAY_SPRITE_MAX_H = 72;
+    let leaderboardDb = null;
+    let leaderboardApi = null;
+    let leaderboardInitPromise = null;
+    let backgroundLayerCache = null;
+
+    const state = {
+      phase: "intro",
+      width: 960,
+      height: 640,
+      time: 0,
+      backgroundSceneIndex: 0,
+      backgroundPreviousSceneIndex: 0,
+      backgroundJumpCount: 0,
+      backgroundTransitionTime: 0,
+      gameOverTimer: 0,
+      last: 0,
+      shake: 0,
+      score: 0,
+      distance: 0,
+      capsCollected: 0,
+      best: Number(localStorage.getItem("pipBoyJetpackBest") || 0),
+      speed: 224,
+      gap: 184,
+      obstacles: [],
+      caps: [],
+      particles: [],
+      stars: [],
+      selectedCharacter: 0,
+      characterPage: 0,
+      selectionRects: [],
+      pageButtonRects: [],
+      selectSwipe: null,
+      lastSelectTapIndex: -1,
+      lastSelectTapTime: 0,
+      leaderboard: {
+        entries: [],
+        initials: localStorage.getItem("pipBoyJetpackInitials") || "",
+        status: "Firebase config needed",
+        dateKey: "",
+        loading: false,
+        submitted: false,
+        inputRect: null,
+        submitRect: null,
+        restartRect: null
+      },
+      soundEnabled: true,
+      audio: null,
+      audioUnlocked: false,
+      player: {
+        x: 196,
+        y: 310,
+        vy: 0,
+        radius: 20,
+        rotation: 0,
+        charge: 1
+      }
+    };
+
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    function characterPageCount() {
+      return Math.max(1, Math.ceil(characters.length / CHARACTERS_PER_PAGE));
+    }
+
+    function pageForCharacter(index) {
+      return Math.floor(clamp(index, 0, characters.length - 1) / CHARACTERS_PER_PAGE);
+    }
+
+    function visibleCharacterRange(page = state.characterPage) {
+      const pageIndex = clamp(page, 0, characterPageCount() - 1);
+      const start = pageIndex * CHARACTERS_PER_PAGE;
+      return {
+        page: pageIndex,
+        start,
+        end: Math.min(characters.length, start + CHARACTERS_PER_PAGE)
+      };
+    }
+
+    function resetSelectTapTracker() {
+      state.lastSelectTapIndex = -1;
+      state.lastSelectTapTime = 0;
+    }
+
+    function showCharacterPage(page, focusVisibleCharacter = true) {
+      const range = visibleCharacterRange(page);
+      state.characterPage = range.page;
+      if (
+        focusVisibleCharacter &&
+        (state.selectedCharacter < range.start || state.selectedCharacter >= range.end)
+      ) {
+        state.selectedCharacter = range.start;
+      }
+      resetSelectTapTracker();
+      updateHud();
+    }
+
+    const rand = (min, max) => min + Math.random() * (max - min);
+    const rollCapRecharge = () => (
+      Math.random() < CAP_FIXED_RECHARGE_CHANCE ? CAP_MILESTONE_CHARGE : Math.random()
+    );
+    const todayScoreDate = () => new Date().toISOString().slice(0, 10);
+    const todayBoardKey = () => `${LEADERBOARD_KEY_PREFIX}${todayScoreDate()}`;
+    const displayBoardDate = (dateKey = todayBoardKey()) => (
+      dateKey.startsWith(LEADERBOARD_KEY_PREFIX) ? dateKey.slice(LEADERBOARD_KEY_PREFIX.length) : dateKey
+    );
+    function leaderboardResetCountdown() {
+      const now = new Date();
+      const resetAt = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+      const remaining = Math.max(0, resetAt - now.getTime());
+      const totalSeconds = Math.floor(remaining / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
+    }
+
+    function startPromptText() {
+      const touchLikely = (window.matchMedia && window.matchMedia("(hover: none), (pointer: coarse)").matches) ||
+        Math.min(window.innerWidth, window.innerHeight) <= 820;
+      return touchLikely ? "TAP TO START" : "CLICK TO START";
+    }
+
+    const firebaseValueReady = (value) => (
+      typeof value === "string" &&
+      value.trim() &&
+      !value.includes("PASTE_FIREBASE") &&
+      !value.includes("YOUR_")
+    );
+    const firebaseConfigured = () => (
+      firebaseValueReady(FIREBASE_CONFIG.apiKey) &&
+      firebaseValueReady(FIREBASE_CONFIG.authDomain) &&
+      firebaseValueReady(FIREBASE_CONFIG.projectId)
+    );
+    const cleanInitials = (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+    const scoreEntryTime = (value) => (
+      value && typeof value.toMillis === "function" ? value.toMillis() : 0
+    );
+    const pointInRect = (point, rect) => rect && (
+      point.x >= rect.x &&
+      point.x <= rect.x + rect.w &&
+      point.y >= rect.y &&
+      point.y <= rect.y + rect.h
+    );
+
+    async function initLeaderboard() {
+      if (!firebaseConfigured()) {
+        state.leaderboard.status = "Add Firebase config to enable daily top 5";
+        return null;
+      }
+      if (leaderboardDb && leaderboardApi) {
+        return { db: leaderboardDb, api: leaderboardApi };
+      }
+      if (!leaderboardInitPromise) {
+        leaderboardInitPromise = Promise.all([
+          import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`),
+          import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-firestore.js`)
+        ]).then(([appModule, firestoreModule]) => {
+          const app = appModule.initializeApp(FIREBASE_CONFIG);
+          leaderboardDb = firestoreModule.getFirestore(app);
+          leaderboardApi = firestoreModule;
+          return { db: leaderboardDb, api: leaderboardApi };
+        }).catch((error) => {
+          leaderboardInitPromise = null;
+          throw error;
+        });
+      }
+      return leaderboardInitPromise;
+    }
+
+    function scoreboardEntriesFromSnapshot(snapshot) {
+      const byInitials = new Map();
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        const initials = cleanInitials(data.initials || doc.id || "???") || "???";
+        const score = Math.max(0, Math.floor(Number(data.score) || 0));
+        const createdAt = scoreEntryTime(data.createdAt);
+        const existing = byInitials.get(initials);
+        if (
+          !existing ||
+          score > existing.score ||
+          (score === existing.score && createdAt && (!existing.createdAt || createdAt < existing.createdAt))
+        ) {
+          byInitials.set(initials, {
+            initials,
+            score,
+            characterName: String(data.characterName || ""),
+            createdAt
+          });
+        }
+      }
+      return Array.from(byInitials.values())
+        .sort((a, b) => b.score - a.score || a.createdAt - b.createdAt)
+        .slice(0, LEADERBOARD_LIMIT);
+    }
+
+    async function loadLeaderboard() {
+      const board = state.leaderboard;
+      board.dateKey = todayBoardKey();
+      board.loading = true;
+      board.inputRect = null;
+      board.submitRect = null;
+      board.restartRect = null;
+      try {
+        const firebase = await initLeaderboard();
+        if (!firebase) {
+          board.entries = [];
+          return;
+        }
+        const { db, api } = firebase;
+        const scoresRef = api.collection(db, LEADERBOARD_ROOT, board.dateKey, "scores");
+        const scoresQuery = api.query(
+          scoresRef,
+          api.orderBy("score", "desc"),
+          api.limit(50)
+        );
+        const snapshot = await api.getDocs(scoresQuery);
+        board.entries = scoreboardEntriesFromSnapshot(snapshot);
+        board.status = board.entries.length ? "Daily board loaded" : "No scores yet today";
+      } catch (error) {
+        board.entries = [];
+        board.status = "Leaderboard unavailable";
+        console.warn("Leaderboard load failed", error);
+      } finally {
+        board.loading = false;
+      }
+    }
+
+    async function submitLeaderboardScore() {
+      const board = state.leaderboard;
+      if (board.submitted) {
+        return;
+      }
+      let initials = cleanInitials(board.initials);
+      if (!initials) {
+        const typed = window.prompt("Enter initials for the daily Top 5:", "");
+        initials = cleanInitials(typed || "");
+      }
+      if (!initials) {
+        board.status = "Enter initials to submit";
+        return;
+      }
+      board.initials = initials;
+      localStorage.setItem("pipBoyJetpackInitials", initials);
+      board.loading = true;
+      board.status = "Submitting score...";
+      try {
+        const firebase = await initLeaderboard();
+        if (!firebase) {
+          board.status = "Add Firebase config to submit scores";
+          return;
+        }
+        const { db, api } = firebase;
+        const character = characters[state.selectedCharacter] || characters[0];
+        const score = Math.max(0, Math.floor(state.score));
+        const scoresRef = api.collection(db, LEADERBOARD_ROOT, todayBoardKey(), "scores");
+        await api.addDoc(scoresRef, {
+          initials,
+          score,
+          characterId: character.id,
+          characterName: character.name,
+          createdAt: api.serverTimestamp()
+        });
+        board.submitted = true;
+        await loadLeaderboard();
+        const visibleEntry = board.entries.find((entry) => entry.initials === initials);
+        if (visibleEntry && visibleEntry.score > score) {
+          board.status = `${initials} stays at ${visibleEntry.score}`;
+        } else if (visibleEntry && visibleEntry.score === score) {
+          board.status = "Score submitted";
+        } else {
+          board.status = "Score saved";
+        }
+      } catch (error) {
+        board.status = "Submit failed";
+        console.warn("Leaderboard submit failed", error);
+      } finally {
+        board.loading = false;
+      }
+    }
+
+    function syncViewportHeight() {
+      const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty("--app-height", `${height}px`);
+    }
+
+    function isMobileCabinet() {
+      return Boolean(
+        (window.matchMedia && window.matchMedia("(max-width: 820px)").matches) ||
+        (window.matchMedia && window.matchMedia("(max-height: 520px)").matches) ||
+        (window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches)
+      );
+    }
+
+    function ensureAudio() {
+      if (!state.soundEnabled) {
+        return null;
+      }
+      if (!state.audio) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+          return null;
+        }
+        state.audio = new AudioContext();
+      }
+      return state.audio;
+    }
+
+    function playSilentUnlockPulse(audio) {
+      if (!audio || state.audioUnlocked || audio.state !== "running") {
+        return;
+      }
+      const gain = audio.createGain();
+      const osc = audio.createOscillator();
+      const now = audio.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      osc.frequency.setValueAtTime(40, now);
+      osc.connect(gain);
+      gain.connect(audio.destination);
+      osc.start(now);
+      osc.stop(now + 0.025);
+      state.audioUnlocked = true;
+    }
+
+    function unlockAudio() {
+      const audio = ensureAudio();
+      if (!audio) {
+        return null;
+      }
+      if (audio.state === "suspended") {
+        const resume = audio.resume();
+        if (resume && typeof resume.then === "function") {
+          resume.then(() => playSilentUnlockPulse(audio)).catch(() => {});
+        }
+        if (resume && typeof resume.catch === "function") {
+          resume.catch(() => {});
+        }
+      } else {
+        playSilentUnlockPulse(audio);
+      }
+      return audio;
+    }
+
+    function playTone(type) {
+      const audio = ensureAudio();
+      if (!audio) {
+        return;
+      }
+      if (audio.state === "suspended") {
+        audio.resume().then(() => playTone(type)).catch(() => {});
+        return;
+      }
+      state.audioUnlocked = true;
+
+      const now = audio.currentTime;
+      const gain = audio.createGain();
+      const osc = audio.createOscillator();
+      const filter = audio.createBiquadFilter();
+      const settings = {
+        boost: { start: 150, end: 430, wave: "sawtooth", volume: 0.05, duration: 0.16 },
+        cap: { start: 720, end: 1080, wave: "triangle", volume: 0.08, duration: 0.12 },
+        score: { start: 420, end: 620, wave: "square", volume: 0.035, duration: 0.08 },
+        crash: { start: 130, end: 48, wave: "sawtooth", volume: 0.12, duration: 0.5 },
+        select: { start: 520, end: 760, wave: "triangle", volume: 0.06, duration: 0.14 },
+        start: { start: 260, end: 520, wave: "square", volume: 0.05, duration: 0.18 }
+      }[type];
+
+      if (!settings) {
+        return;
+      }
+
+      osc.type = settings.wave;
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(type === "crash" ? 480 : 1800, now);
+      osc.frequency.setValueAtTime(settings.start, now);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, settings.end), now + settings.duration);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(settings.volume, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + settings.duration);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(audio.destination);
+      osc.start(now);
+      osc.stop(now + settings.duration + 0.03);
+    }
+
+    function playDuckSound() {
+      const audio = ensureAudio();
+      if (!audio) {
+        return;
+      }
+      if (audio.state === "suspended") {
+        audio.resume().then(() => playDuckSound()).catch(() => {});
+        return;
+      }
+      state.audioUnlocked = true;
+
+      const now = audio.currentTime;
+      [0, 0.075].forEach((offset, index) => {
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        const filter = audio.createBiquadFilter();
+        const noise = audio.createBufferSource();
+        const noiseGain = audio.createGain();
+        const noiseFilter = audio.createBiquadFilter();
+        const start = now + offset;
+        const duration = index === 0 ? 0.16 : 0.12;
+        const noiseBuffer = audio.createBuffer(1, Math.floor(audio.sampleRate * duration), audio.sampleRate);
+        const noiseData = noiseBuffer.getChannelData(0);
+
+        for (let i = 0; i < noiseData.length; i += 1) {
+          const fade = 1 - i / noiseData.length;
+          noiseData[i] = (Math.random() * 2 - 1) * fade;
+        }
+
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(index === 0 ? 470 : 390, start);
+        osc.frequency.exponentialRampToValueAtTime(index === 0 ? 155 : 135, start + duration);
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(index === 0 ? 820 : 680, start);
+        filter.frequency.exponentialRampToValueAtTime(index === 0 ? 520 : 440, start + duration);
+        filter.Q.setValueAtTime(4.5, start);
+        gain.gain.setValueAtTime(0.001, start);
+        gain.gain.exponentialRampToValueAtTime(index === 0 ? 0.18 : 0.12, start + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+        noise.buffer = noiseBuffer;
+        noiseFilter.type = "bandpass";
+        noiseFilter.frequency.setValueAtTime(index === 0 ? 1150 : 980, start);
+        noiseFilter.Q.setValueAtTime(1.7, start);
+        noiseGain.gain.setValueAtTime(0.001, start);
+        noiseGain.gain.exponentialRampToValueAtTime(index === 0 ? 0.065 : 0.045, start + 0.012);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audio.destination);
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(audio.destination);
+        osc.start(start);
+        noise.start(start);
+        osc.stop(start + duration + 0.03);
+        noise.stop(start + duration + 0.03);
+      });
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      if (!state.soundEnabled && state.audio) {
+        state.audioUnlocked = false;
+        state.audio.suspend();
+      } else {
+        playTone("select");
+      }
+      updateHud();
+    }
+
+    function clearRun() {
+      const character = characters[state.selectedCharacter] || characters[0];
+      state.gameOverTimer = 0;
+      state.shake = 0;
+      state.score = 0;
+      state.distance = 0;
+      state.capsCollected = 0;
+      state.backgroundSceneIndex = 0;
+      state.backgroundPreviousSceneIndex = 0;
+      state.backgroundJumpCount = 0;
+      state.backgroundTransitionTime = 0;
+      state.speed = 224;
+      state.gap = 232;
+      state.obstacles = [];
+      state.caps = [];
+      state.particles = [];
+      state.leaderboard.submitted = false;
+      state.leaderboard.inputRect = null;
+      state.leaderboard.submitRect = null;
+      state.leaderboard.restartRect = null;
+      state.player.x = Math.max(92, state.width * 0.26);
+      state.player.y = state.height * 0.48;
+      state.player.vy = 0;
+      state.player.radius = character.radius;
+      state.player.charge = 1;
+      state.player.rotation = 0;
+    }
+
+    function chooseCharacter(index) {
+      resetSelectTapTracker();
+      state.selectedCharacter = clamp(index, 0, characters.length - 1);
+      state.characterPage = pageForCharacter(state.selectedCharacter);
+      clearRun();
+      state.phase = "ready";
+      playTone("select");
+      updateHud();
+    }
+
+    function showCharacterSelect() {
+      resetSelectTapTracker();
+      state.characterPage = pageForCharacter(state.selectedCharacter);
+      clearRun();
+      state.phase = "select";
+      playTone("select");
+      updateHud();
+    }
+
+    function resetGame() {
+      if (state.gameOverTimer > 0) {
+        return;
+      }
+
+      if (state.phase === "intro") {
+        showCharacterSelect();
+        return;
+      }
+
+      if (state.phase === "select") {
+        chooseCharacter(state.selectedCharacter);
+        return;
+      }
+
+      playTone("start");
+      state.phase = "running";
+      state.time = 0;
+      clearRun();
+      state.player.vy = -320;
+
+      for (let i = 0; i < 5; i += 1) {
+        spawnObstacle(state.width + 120 + i * 280);
+      }
+      updateHud();
+    }
+
+    function resizeCanvas() {
+      syncViewportHeight();
+      const rect = canvas.getBoundingClientRect();
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * scale));
+      canvas.height = Math.max(1, Math.floor(rect.height * scale));
+      state.width = rect.width;
+      state.height = rect.height;
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      resetBackgroundLayerCache();
+      seedStars();
+    }
+
+    function resetBackgroundLayerCache() {
+      backgroundLayerCache = null;
+    }
+
+    function seedStars() {
+      const count = Math.floor((state.width * state.height) / 9000);
+      state.stars = Array.from({ length: count }, () => ({
+        x: Math.random() * state.width,
+        y: Math.random() * state.height,
+        z: rand(0.15, 1),
+        blink: Math.random() * Math.PI * 2
+      }));
+    }
+
+    function randomObstacleSpritePair() {
+      const first = Math.floor(Math.random() * obstacleSprites.length);
+      if (obstacleSprites.length < 2 || Math.random() < 0.58) {
+        return {
+          topSprite: first,
+          bottomSprite: first,
+          mixSprites: false
+        };
+      }
+      const second = (first + 1 + Math.floor(Math.random() * (obstacleSprites.length - 1))) % obstacleSprites.length;
+      return {
+        topSprite: first,
+        bottomSprite: second,
+        mixSprites: true
+      };
+    }
+
+    function spawnObstacle(x = state.width + 80) {
+      const margin = Math.max(70, state.height * 0.12);
+      const gap = clamp(state.gap - state.score * 0.75, 178, 238);
+      const center = rand(margin + gap * 0.5, state.height - margin - gap * 0.5);
+      const width = rand(74, 98);
+      const sprites = randomObstacleSpritePair();
+      state.obstacles.push({
+        x,
+        width,
+        gapTop: center - gap * 0.5,
+        gapBottom: center + gap * 0.5,
+        passed: false,
+        stripe: Math.random() > 0.5 ? 1 : -1,
+        topSprite: sprites.topSprite,
+        bottomSprite: sprites.bottomSprite,
+        mixSprites: sprites.mixSprites
+      });
+
+      state.caps.push({
+        x: x + width * 0.5,
+        y: center,
+        r: 13,
+        sprite: Math.floor(Math.random() * coinSprites.length),
+        taken: false,
+        spin: Math.random() * Math.PI * 2
+      });
+    }
+
+    function thrust() {
+      if (state.phase === "select") {
+        chooseCharacter(state.selectedCharacter);
+        return;
+      }
+      if (state.phase === "ready" || state.phase === "over") {
+        if (state.gameOverTimer > 0) {
+          return;
+        }
+        resetGame();
+        return;
+      }
+      if (state.phase !== "running") {
+        return;
+      }
+      if (state.player.charge < BOOST_COST) {
+        playTone("score");
+        return;
+      }
+
+      state.player.vy = -350;
+      state.player.charge = clamp(state.player.charge - BOOST_COST, 0, 1);
+      countBackgroundJump();
+      playTone("boost");
+      burst(state.player.x - 30, state.player.y + 16, 12, "#ffc857");
+    }
+
+    function countBackgroundJump() {
+      state.backgroundJumpCount += 1;
+      if (state.backgroundJumpCount < BACKGROUND_JUMPS_PER_SCENE) {
+        return;
+      }
+
+      state.backgroundJumpCount = 0;
+      advanceBackgroundScene();
+    }
+
+    function advanceBackgroundScene() {
+      const loadedIndexes = backgroundImages
+        .map((image, index) => ({ image, index }))
+        .filter(({ image }) => image.complete && image.naturalWidth)
+        .map(({ index }) => index);
+
+      if (!loadedIndexes.length) {
+        return;
+      }
+
+      state.backgroundPreviousSceneIndex = state.backgroundSceneIndex;
+      const currentIndex = ((state.backgroundSceneIndex % backgroundImages.length) + backgroundImages.length) % backgroundImages.length;
+      const choices = loadedIndexes.filter((index) => index !== currentIndex);
+      const pool = choices.length ? choices : loadedIndexes;
+      state.backgroundSceneIndex = pool[Math.floor(Math.random() * pool.length)];
+      state.backgroundTransitionTime = BACKGROUND_TRANSITION_SECONDS;
+    }
+
+    function burst(x, y, count, color) {
+      for (let i = 0; i < count; i += 1) {
+        state.particles.push({
+          x,
+          y,
+          vx: rand(-120, -28),
+          vy: rand(-80, 96),
+          life: rand(0.22, 0.55),
+          maxLife: rand(0.45, 0.8),
+          size: rand(2, 5),
+          color
+        });
+      }
+    }
+
+    function crash() {
+      if (state.phase !== "running") {
+        return;
+      }
+
+      state.phase = "over";
+      state.gameOverTimer = 3;
+      state.shake = 16;
+      playTone("crash");
+      burst(state.player.x, state.player.y, 28, "#ff5d4d");
+      state.leaderboard.submitted = false;
+      state.leaderboard.status = "Loading daily top 5...";
+      loadLeaderboard();
+      if (state.score > state.best) {
+        state.best = state.score;
+        localStorage.setItem("pipBoyJetpackBest", String(state.best));
+      }
+      updateHud();
+    }
+
+    function togglePause() {
+      if (state.phase === "running") {
+        state.phase = "paused";
+      } else if (state.phase === "paused") {
+        state.phase = "running";
+        state.last = performance.now();
+      }
+      updateHud();
+    }
+
+    function radioReset() {
+      state.gameOverTimer = 0;
+      resetGame();
+    }
+
+    function startOrRestartControl() {
+      state.gameOverTimer = 0;
+      resetGame();
+    }
+
+    function homeControl() {
+      showCharacterSelect();
+    }
+
+    function statControlAction() {
+      if (isMobileCabinet()) {
+        startOrRestartControl();
+        return;
+      }
+      showCharacterSelect();
+    }
+
+    function radioControlAction() {
+      if (isMobileCabinet()) {
+        homeControl();
+        return;
+      }
+      radioReset();
+    }
+
+    function update(dt) {
+      state.time += dt;
+      state.backgroundTransitionTime = Math.max(0, state.backgroundTransitionTime - dt);
+      state.shake = Math.max(0, state.shake - dt * 26);
+      state.gameOverTimer = Math.max(0, state.gameOverTimer - dt);
+
+      if (state.phase !== "running") {
+        updateParticles(dt);
+        updateHud();
+        return;
+      }
+
+      const player = state.player;
+      const gravity = 880;
+      player.vy += gravity * dt;
+      player.y += player.vy * dt;
+      player.rotation = clamp(player.vy / 650, -0.5, 0.72);
+      player.charge = clamp(player.charge + dt * 0.22, 0, 1);
+
+      const speed = state.speed + Math.min(170, state.score * 7.2);
+      state.distance += speed * dt * 0.28;
+      for (const star of state.stars) {
+        star.x -= speed * star.z * dt * 0.16;
+        if (star.x < -4) {
+          star.x = state.width + 4;
+          star.y = Math.random() * state.height;
+        }
+      }
+
+      for (const obstacle of state.obstacles) {
+        obstacle.x -= speed * dt;
+        if (!obstacle.passed && obstacle.x + obstacle.width < player.x) {
+          obstacle.passed = true;
+          state.score += 1;
+          playTone("score");
+          burst(player.x - 18, player.y - 28, 7, "#9cff6d");
+        }
+      }
+
+      for (const cap of state.caps) {
+        cap.x -= speed * dt;
+        cap.spin += dt * 2.2;
+        if (!cap.taken && Math.hypot(cap.x - player.x, cap.y - player.y) < player.radius + cap.r) {
+          cap.taken = true;
+          state.score += 2;
+          state.capsCollected += 1;
+          if (state.capsCollected % CAP_MILESTONE === 0) {
+            state.player.charge = clamp(state.player.charge + rollCapRecharge(), 0, 1);
+            burst(cap.x, cap.y, 8, "#9cff6d");
+          }
+          playDuckSound();
+          burst(cap.x, cap.y, 14, "#ffc857");
+        }
+      }
+
+      state.obstacles = state.obstacles.filter((obstacle) => obstacle.x > -obstacle.width - 20);
+      state.caps = state.caps.filter((cap) => cap.x > -40 && !cap.taken);
+      while (state.obstacles.length < 5) {
+        const last = state.obstacles[state.obstacles.length - 1];
+        spawnObstacle((last ? last.x : state.width) + rand(250, 330));
+      }
+
+      const floor = state.height - 42;
+      if (player.y - player.radius < 18 || player.y + player.radius > floor) {
+        crash();
+      }
+
+      for (const obstacle of state.obstacles) {
+        if (hitsObstacle(player, obstacle)) {
+          crash();
+          break;
+        }
+      }
+
+      updateParticles(dt);
+      updateHud();
+    }
+
+    function circleRect(cx, cy, cr, rx, ry, rw, rh) {
+      const closestX = clamp(cx, rx, rx + rw);
+      const closestY = clamp(cy, ry, ry + rh);
+      return Math.hypot(cx - closestX, cy - closestY) < cr;
+    }
+
+    function hitsObstacle(player, obstacle) {
+      const hitInsetX = 18;
+      const hitInsetY = 16;
+      const hitW = Math.max(12, obstacle.width - hitInsetX * 2);
+      const hitR = player.radius * 0.72;
+
+      return circleRect(
+        player.x,
+        player.y,
+        hitR,
+        obstacle.x + hitInsetX,
+        -40,
+        hitW,
+        Math.max(0, obstacle.gapTop + 40 - hitInsetY)
+      ) || circleRect(
+        player.x,
+        player.y,
+        hitR,
+        obstacle.x + hitInsetX,
+        obstacle.gapBottom + hitInsetY,
+        hitW,
+        Math.max(0, state.height - obstacle.gapBottom - hitInsetY)
+      );
+    }
+
+    function updateParticles(dt) {
+      for (const particle of state.particles) {
+        particle.life -= dt;
+        particle.x += particle.vx * dt;
+        particle.y += particle.vy * dt;
+        particle.vy += 230 * dt;
+      }
+      state.particles = state.particles.filter((particle) => particle.life > 0);
+    }
+
+    function updateHud() {
+      const phaseLabel = {
+        intro: "Intro",
+        select: "Select",
+        ready: "Ready",
+        running: "Running",
+        paused: "Paused",
+        over: state.gameOverTimer > 0 ? "Game Over" : "Signal Lost"
+      }[state.phase];
+
+      document.body.dataset.phase = state.phase;
+      modeText.textContent = phaseLabel;
+      scoreText.textContent = String(state.score);
+      bestText.textContent = String(Math.max(state.best, state.score));
+      const charge = Math.round(state.player.charge * 100);
+      const capProgress = state.capsCollected % CAP_MILESTONE;
+      chargeText.textContent = `${charge}%`;
+      capsText.textContent = `${capProgress}/${CAP_MILESTONE}`;
+      chargeBar.style.transform = `scaleX(${state.player.charge})`;
+      mobileScoreText.textContent = String(state.score);
+      mobileBestText.textContent = String(Math.max(state.best, state.score));
+      mobileChargeText.textContent = `${charge}%`;
+      mobileCapsText.textContent = `Caps ${capProgress}/${CAP_MILESTONE}`;
+      mobileChargeBar.style.transform = `scaleX(${state.player.charge})`;
+      mobileDistanceText.textContent = String(Math.floor(state.distance));
+      startButton.textContent = state.phase === "select" ? "Choose" : state.phase === "running" ? "Restart" : "Start";
+      pauseButton.textContent = state.phase === "paused" ? "Resume" : "Pause";
+      mobileRestartButton.textContent = state.phase === "intro" ? "Start" : state.phase === "select" ? "Choose" : state.phase === "ready" ? "Start" : "Restart";
+      mobilePauseButton.textContent = state.phase === "paused" ? "Resume" : "Pause";
+      statControl.textContent = state.phase === "running" ? "Start" : "Start";
+      dataControl.textContent = state.phase === "paused" ? "Resume" : "Pause";
+      radioControl.textContent = "Home";
+      soundButton.textContent = state.soundEnabled ? "Sound On" : "Sound Off";
+      soundButton.setAttribute("aria-pressed", String(state.soundEnabled));
+    }
+
+    function draw() {
+      const sx = state.shake ? rand(-state.shake, state.shake) : 0;
+      const sy = state.shake ? rand(-state.shake, state.shake) : 0;
+      ctx.save();
+      ctx.clearRect(0, 0, state.width, state.height);
+      ctx.translate(sx, sy);
+
+      drawBackground();
+      if (state.phase === "intro") {
+        drawIntroScreen();
+        ctx.restore();
+        return;
+      }
+      if (state.phase === "select") {
+        drawCharacterSelect();
+        ctx.restore();
+        return;
+      }
+
+      drawObstacles();
+      drawCaps();
+      drawPlayer();
+      drawParticles();
+      drawHudOverlay();
+
+      if (state.phase === "ready") {
+        drawMessage(`${characters[state.selectedCharacter].readyName.toUpperCase()} READY`, "Space, click, tap, or BOOST");
+      } else if (state.phase === "paused") {
+        drawMessage("PAUSED", "Press P or Resume");
+      } else if (state.phase === "over") {
+        if (state.gameOverTimer > 0) {
+          drawGameOverScreen();
+        } else {
+          drawLeaderboardPanel();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawBackground() {
+      const mobileCabinet = isMobileCabinet();
+      const loadedBackground = backgroundImages.find((image) => image.complete && image.naturalWidth);
+      if (loadedBackground) {
+        const bgOffsetY = state.phase === "select"
+          ? 0
+          : clamp((state.player.y - state.height * 0.48) * 0.1, -18, 18);
+        const currentIndex = ((state.backgroundSceneIndex % backgroundImages.length) + backgroundImages.length) % backgroundImages.length;
+        const currentBackground = backgroundImages[currentIndex].complete && backgroundImages[currentIndex].naturalWidth
+          ? backgroundImages[currentIndex]
+          : loadedBackground;
+        const previousIndex = ((state.backgroundPreviousSceneIndex % backgroundImages.length) + backgroundImages.length) % backgroundImages.length;
+        const previousBackground = backgroundImages[previousIndex].complete && backgroundImages[previousIndex].naturalWidth
+          ? backgroundImages[previousIndex]
+          : currentBackground;
+        const transitionProgress = BACKGROUND_TRANSITION_SECONDS > 0
+          ? clamp(1 - state.backgroundTransitionTime / BACKGROUND_TRANSITION_SECONDS, 0, 1)
+          : 1;
+        const fade = transitionProgress * transitionProgress * (3 - 2 * transitionProgress);
+
+        if (state.backgroundTransitionTime > 0 && previousBackground !== currentBackground) {
+          drawBackgroundLayer(previousIndex, previousBackground, bgOffsetY);
+          ctx.save();
+          ctx.globalAlpha = fade;
+          drawBackgroundLayer(currentIndex, currentBackground, bgOffsetY);
+          ctx.restore();
+        } else {
+          drawBackgroundLayer(currentIndex, currentBackground, bgOffsetY);
+        }
+
+        ctx.fillStyle = mobileCabinet ? "rgba(6, 10, 8, 0.05)" : "rgba(6, 22, 8, 0.24)";
+        ctx.fillRect(0, 0, state.width, state.height);
+
+        const bottomShade = ctx.createLinearGradient(0, state.height * 0.68, 0, state.height);
+        bottomShade.addColorStop(0, "rgba(0, 0, 0, 0)");
+        bottomShade.addColorStop(1, "rgba(0, 0, 0, 0.42)");
+        ctx.fillStyle = bottomShade;
+        ctx.fillRect(0, 0, state.width, state.height);
+
+        if (!mobileCabinet) {
+          ctx.strokeStyle = "rgba(156, 255, 109, 0.18)";
+          ctx.lineWidth = 2;
+          for (let x = -80 + (state.time * 120) % 80; x < state.width + 80; x += 80) {
+            ctx.beginPath();
+            ctx.moveTo(x, state.height - 40);
+            ctx.lineTo(x + 36, state.height);
+            ctx.stroke();
+          }
+        }
+        return;
+      }
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, state.height);
+      gradient.addColorStop(0, "#0a1910");
+      gradient.addColorStop(0.55, "#102512");
+      gradient.addColorStop(1, "#071008");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      ctx.fillStyle = "rgba(156, 255, 109, 0.35)";
+      for (const star of state.stars) {
+        const pulse = 0.35 + Math.sin(state.time * 2 + star.blink) * 0.18;
+        ctx.globalAlpha = clamp(star.z * pulse, 0.08, 0.4);
+        ctx.fillRect(star.x, star.y, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+
+      drawRuinsLayer(state.height - 116, 0.35, "#142518", 36);
+      drawRuinsLayer(state.height - 78, 0.55, "#1a2d1c", 64);
+
+      ctx.fillStyle = "#172314";
+      ctx.fillRect(0, state.height - 42, state.width, 42);
+      if (!mobileCabinet) {
+        ctx.strokeStyle = "rgba(156, 255, 109, 0.18)";
+        ctx.lineWidth = 2;
+        for (let x = -80 + (state.time * 120) % 80; x < state.width + 80; x += 80) {
+          ctx.beginPath();
+          ctx.moveTo(x, state.height - 40);
+          ctx.lineTo(x + 36, state.height);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function drawIntroScreen() {
+      ctx.save();
+      if (introImage.complete && introImage.naturalWidth) {
+        drawCoverImage(introImage, 0, 0, state.width, state.height);
+      } else {
+        const gradient = ctx.createLinearGradient(0, 0, state.width, state.height);
+        gradient.addColorStop(0, "#161033");
+        gradient.addColorStop(0.48, "#220b2e");
+        gradient.addColorStop(1, "#05162f");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, state.width, state.height);
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#f8f3dc";
+        fitMonoFont("DUCK DUCK NUKE", 54, 28, state.width - 60);
+        ctx.fillText("DUCK DUCK NUKE", state.width / 2, state.height * 0.46);
+        ctx.fillStyle = "#ffc857";
+        fitMonoFont("BY WULFZX.UNDERGROUND", 20, 12, state.width - 80);
+        ctx.fillText("BY WULFZX.UNDERGROUND", state.width / 2, state.height * 0.54);
+      }
+
+      const prompt = startPromptText();
+      const promptY = state.height - clamp(state.height * 0.11, 48, 74);
+      const boxW = Math.max(96, Math.min(clamp(state.width * 0.52, 230, 430), state.width - 24));
+      const boxH = clamp(state.height * 0.105, 42, 58);
+      const boxX = (state.width - boxW) / 2;
+      const boxY = promptY - boxH * 0.68;
+      ctx.fillStyle = "rgba(3, 8, 5, 0.72)";
+      ctx.strokeStyle = "rgba(255, 200, 87, 0.82)";
+      ctx.lineWidth = 2;
+      roundRect(boxX, boxY, boxW, boxH, 7, true, true);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#fff2b6";
+      ctx.shadowColor = "rgba(255, 200, 87, 0.85)";
+      ctx.shadowBlur = 12 + Math.sin(state.time * 5) * 4;
+      fitMonoFont(prompt, 24, 13, boxW - 26);
+      ctx.fillText(prompt, state.width / 2, boxY + boxH / 2);
+      ctx.shadowBlur = 0;
+      ctx.textBaseline = "alphabetic";
+      ctx.restore();
+    }
+
+    function drawBackgroundLayer(index, fallbackImage, offsetY) {
+      const layer = getBackgroundLayer(index);
+      if (!layer) {
+        drawCoverImage(fallbackImage, 0, 0, state.width, state.height, 0, offsetY, BACKGROUND_LAYER_ZOOM);
+        return;
+      }
+
+      const maxOffsetY = Math.max(0, (layer.height - state.height) * 0.5);
+      const drawX = layer.x;
+      const drawY = layer.y + clamp(offsetY, -maxOffsetY, maxOffsetY);
+      ctx.drawImage(layer.canvas, drawX, drawY, layer.width, layer.height);
+    }
+
+    function getBackgroundLayer(index) {
+      const image = backgroundImages[index];
+      if (!image || !image.complete || !image.naturalWidth) {
+        return null;
+      }
+
+      const cacheWidth = Math.max(1, Math.round(state.width));
+      const cacheHeight = Math.max(1, Math.round(state.height));
+      const cacheKey = `${cacheWidth}x${cacheHeight}:${BACKGROUND_LAYER_ZOOM}`;
+      if (!backgroundLayerCache || backgroundLayerCache.key !== cacheKey) {
+        backgroundLayerCache = { key: cacheKey, layers: new Map() };
+      }
+
+      if (backgroundLayerCache.layers.has(index)) {
+        return backgroundLayerCache.layers.get(index);
+      }
+
+      const imageRatio = image.naturalWidth / image.naturalHeight;
+      const targetRatio = state.width / state.height;
+      let layerWidth = state.width;
+      let layerHeight = state.height;
+      if (targetRatio > imageRatio) {
+        layerHeight = state.width / imageRatio;
+      } else {
+        layerWidth = state.height * imageRatio;
+      }
+
+      layerWidth = Math.max(1, Math.ceil(layerWidth * BACKGROUND_LAYER_ZOOM));
+      layerHeight = Math.max(1, Math.ceil(layerHeight * BACKGROUND_LAYER_ZOOM));
+
+      const canvasLayer = document.createElement("canvas");
+      canvasLayer.width = layerWidth;
+      canvasLayer.height = layerHeight;
+      const layerCtx = canvasLayer.getContext("2d");
+      layerCtx.imageSmoothingEnabled = true;
+      layerCtx.imageSmoothingQuality = "high";
+      layerCtx.drawImage(image, 0, 0, layerWidth, layerHeight);
+
+      const layer = {
+        canvas: canvasLayer,
+        width: layerWidth,
+        height: layerHeight,
+        x: (state.width - layerWidth) * 0.5,
+        y: (state.height - layerHeight) * 0.5
+      };
+      backgroundLayerCache.layers.set(index, layer);
+      return layer;
+    }
+
+    function drawCharacterSelect() {
+      const titleY = clamp(state.height * 0.14, 32, 46);
+      ctx.save();
+      ctx.fillStyle = "rgba(5, 12, 6, 0.42)";
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#9cff6d";
+      ctx.shadowColor = "rgba(156, 255, 109, 0.55)";
+      ctx.shadowBlur = 14;
+      fitMonoFont("CHOOSE YOUR GOOSE", 30, 18, state.width - 44);
+      ctx.fillText("CHOOSE YOUR GOOSE", state.width / 2, titleY);
+      ctx.shadowBlur = 0;
+
+      const pageCount = characterPageCount();
+      const range = visibleCharacterRange();
+      state.characterPage = range.page;
+      const visibleCharacters = characters.slice(range.start, range.end);
+      const count = visibleCharacters.length;
+      const columns = pageCount > 1 ? 4 : count <= 4 ? count : 4;
+      const rows = pageCount > 1 ? 2 : Math.ceil(count / columns);
+      const sidePad = clamp(state.width * 0.035, 10, 18);
+      const gapX = clamp(state.width * 0.018, 5, 10);
+      const gapY = clamp(state.height * 0.025, 5, 9);
+      const hintY = state.height - 14;
+      const pageControlY = hintY - 25;
+      const gridTop = clamp(titleY + 18, 52, state.height * 0.31);
+      const gridBottom = pageCount > 1 ? pageControlY - 17 : hintY - 16;
+      const cardW = Math.max(44, (state.width - sidePad * 2 - gapX * (columns - 1)) / columns);
+      const cardH = clamp((gridBottom - gridTop - gapY * (rows - 1)) / rows, 62, 118);
+      const totalW = cardW * columns + gapX * (columns - 1);
+      const totalH = cardH * rows + gapY * (rows - 1);
+      const startX = (state.width - totalW) / 2;
+      const startY = gridTop + Math.max(0, (gridBottom - gridTop - totalH) / 2);
+      state.selectionRects = visibleCharacters.map((character, visibleIndex) => {
+        const index = range.start + visibleIndex;
+        const col = visibleIndex % columns;
+        const row = Math.floor(visibleIndex / columns);
+        const x = startX + col * (cardW + gapX);
+        const y = startY + row * (cardH + gapY);
+        const selected = index === state.selectedCharacter;
+        drawPilotCard(character, x, y, cardW, cardH, selected);
+        return { x, y, w: cardW, h: cardH, index };
+      });
+      state.pageButtonRects = [];
+
+      if (pageCount > 1) {
+        const buttonW = clamp(state.width * 0.095, 34, 48);
+        const buttonH = clamp(state.height * 0.052, 17, 24);
+        const centerX = state.width / 2;
+        const prevRect = { x: centerX - buttonW - 57, y: pageControlY - buttonH + 7, w: buttonW, h: buttonH, direction: -1 };
+        const nextRect = { x: centerX + 57, y: pageControlY - buttonH + 7, w: buttonW, h: buttonH, direction: 1 };
+        state.pageButtonRects = [prevRect, nextRect];
+
+        [prevRect, nextRect].forEach((rect) => {
+          ctx.fillStyle = "rgba(5, 12, 6, 0.82)";
+          ctx.strokeStyle = "rgba(156, 255, 109, 0.58)";
+          ctx.lineWidth = 2;
+          roundRect(rect.x, rect.y, rect.w, rect.h, 5, true, true);
+          ctx.fillStyle = "#9cff6d";
+          fitMonoFont(rect.direction < 0 ? "<" : ">", 16, 10, rect.w - 10);
+          ctx.fillText(rect.direction < 0 ? "<" : ">", rect.x + rect.w / 2, rect.y + rect.h - 6);
+        });
+
+        ctx.fillStyle = "rgba(217, 255, 208, 0.82)";
+        const pageLabel = `PAGE ${range.page + 1}/${pageCount}`;
+        fitMonoFont(pageLabel, 12, 8, 92);
+        ctx.fillText(pageLabel, centerX, pageControlY);
+      }
+
+      ctx.fillStyle = "rgba(217, 255, 208, 0.78)";
+      fitMonoFont("CLICK/TAP TO PREVIEW / DOUBLE TO LAUNCH", 13, 8, state.width - 36);
+      ctx.fillText("CLICK/TAP TO PREVIEW / DOUBLE TO LAUNCH", state.width / 2, hintY);
+      ctx.restore();
+    }
+
+    function drawPilotCard(character, x, y, w, h, selected) {
+      ctx.save();
+      ctx.fillStyle = selected ? "rgba(156, 255, 109, 0.14)" : "rgba(5, 12, 6, 0.88)";
+      ctx.strokeStyle = selected ? "#9cff6d" : "rgba(156, 255, 109, 0.42)";
+      ctx.lineWidth = selected ? 3 : 2;
+      ctx.shadowColor = selected ? "rgba(156, 255, 109, 0.42)" : "transparent";
+      ctx.shadowBlur = selected ? 18 : 0;
+      roundRect(x, y, w, h, Math.min(7, w * 0.08, h * 0.12), true, true);
+      ctx.shadowBlur = 0;
+
+      const imageY = y + h * 0.30;
+      const imageW = Math.min(w * 0.76, character.spriteW * 0.95, h * 0.82);
+      drawCharacterImage(character, x + w / 2, imageY, imageW, Math.sin(state.time * 2.4) * 0.06, selected);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = selected ? "#ffffff" : "#9cff6d";
+      const titleLines = character.titleLines || [character.name.toUpperCase()];
+      const lineHeight = clamp(h * 0.13, 8, 12);
+      const nameMax = clamp(h * 0.16, 10, 14);
+      const titleStart = y + h - 27 - Math.max(0, titleLines.length - 1) * lineHeight;
+      titleLines.forEach((line, index) => {
+        fitMonoFont(line, nameMax, 6, w - 8);
+        ctx.fillText(line, x + w / 2, titleStart + index * lineHeight);
+      });
+
+      ctx.fillStyle = selected ? "#ffc857" : "rgba(217, 255, 208, 0.68)";
+      fitMonoFont(selected ? "READY" : "SELECT", clamp(h * 0.13, 8, 11), 6, w - 14);
+      ctx.fillText(selected ? "READY" : "SELECT", x + w / 2, y + h - 8);
+      ctx.restore();
+    }
+
+    function drawCoverImage(image, x, y, width, height, offsetX = 0, offsetY = 0, zoom = 1) {
+      const imageRatio = image.naturalWidth / image.naturalHeight;
+      const targetRatio = width / height;
+      let drawW = width;
+      let drawH = height;
+
+      if (targetRatio > imageRatio) {
+        drawH = width / imageRatio;
+      } else {
+        drawW = height * imageRatio;
+      }
+
+      drawW *= zoom;
+      drawH *= zoom;
+
+      const maxOffsetX = Math.max(0, (drawW - width) * 0.5);
+      const maxOffsetY = Math.max(0, (drawH - height) * 0.5);
+      const drawX = x + (width - drawW) * 0.5 + clamp(offsetX, -maxOffsetX, maxOffsetX);
+      const drawY = y + (height - drawH) * 0.5 + clamp(offsetY, -maxOffsetY, maxOffsetY);
+      ctx.drawImage(image, drawX, drawY, drawW, drawH);
+    }
+
+    function drawRuinsLayer(baseY, alpha, color, pace) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      const offset = (state.time * pace) % 180;
+      for (let x = -220 - offset; x < state.width + 220; x += 180) {
+        const h = 42 + ((x * 13) % 74);
+        ctx.fillRect(x, baseY - h, 48, h);
+        ctx.fillRect(x + 60, baseY - h * 0.65, 30, h * 0.65);
+        ctx.fillRect(x + 100, baseY - h * 0.95, 18, h * 0.95);
+      }
+      ctx.restore();
+    }
+
+    function drawObstacles() {
+      for (const obstacle of state.obstacles) {
+        drawObstacleStack(obstacle.x, 0, obstacle.width, obstacle.gapTop, obstacle.topSprite, true, obstacle.stripe);
+        drawObstacleStack(
+          obstacle.x,
+          obstacle.gapBottom,
+          obstacle.width,
+          state.height - obstacle.gapBottom,
+          obstacle.bottomSprite,
+          false,
+          obstacle.stripe
+        );
+      }
+    }
+
+    function getObstacleSprite(index) {
+      if (!obstacleSprites.length) {
+        return null;
+      }
+      const normalized = ((index || 0) % obstacleSprites.length + obstacleSprites.length) % obstacleSprites.length;
+      return obstacleSprites[normalized];
+    }
+
+    function drawObstacleStack(x, y, w, h, spriteIndex, top, stripe) {
+      const sprite = getObstacleSprite(spriteIndex);
+      if (!sprite || !sprite.complete || !sprite.naturalWidth) {
+        drawPipe(x, y, w, h, top, stripe);
+        return;
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - 12, y, w + 24, h);
+      ctx.clip();
+
+      const drawW = w + 20;
+      const naturalSegmentH = drawW * (sprite.naturalHeight / sprite.naturalWidth);
+      const segmentH = clamp(naturalSegmentH, 96, Math.max(108, state.height * 0.34));
+      const overlap = Math.max(18, segmentH * 0.24);
+      const step = Math.max(34, segmentH - overlap);
+      const drawX = x - 10 + (obstacleSpriteOffsets[spriteIndex] || 0);
+      if (top) {
+        for (let yy = y + h - segmentH; yy > y - segmentH - step; yy -= step) {
+          drawObstacleSprite(sprite, drawX, yy, drawW, segmentH);
+        }
+      } else {
+        for (let yy = y; yy < y + h + step; yy += step) {
+          drawObstacleSprite(sprite, drawX, yy, drawW, segmentH);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawObstacleSprite(sprite, x, y, w, h) {
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
+      ctx.drawImage(sprite, x, y, w, h);
+      ctx.restore();
+    }
+
+    function drawPipe(x, y, w, h, top, stripe) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - 10, y, w + 20, h);
+      ctx.clip();
+
+      const segmentH = 76;
+      if (top) {
+        for (let yy = y + h - segmentH; yy > y - segmentH; yy -= segmentH) {
+          drawBarrelSegment(x - 4, yy, w + 8, segmentH + 2, stripe);
+        }
+      } else {
+        for (let yy = y; yy < y + h; yy += segmentH) {
+          drawBarrelSegment(x - 4, yy, w + 8, segmentH + 2, stripe);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawBarrelSegment(x, y, w, h, stripe) {
+      const body = ctx.createLinearGradient(x, 0, x + w, 0);
+      body.addColorStop(0, "#7d7818");
+      body.addColorStop(0.22, "#d4c621");
+      body.addColorStop(0.5, "#9a931d");
+      body.addColorStop(0.78, "#d0be1e");
+      body.addColorStop(1, "#625d16");
+      ctx.fillStyle = body;
+      ctx.strokeStyle = "#392f16";
+      ctx.lineWidth = 2;
+      roundRect(x, y, w, h, 8, true, true);
+
+      ctx.fillStyle = "rgba(64, 43, 15, 0.42)";
+      ctx.fillRect(x + 5, y + 8, w - 10, 5);
+      ctx.fillRect(x + 5, y + h - 13, w - 10, 5);
+
+      ctx.strokeStyle = "rgba(39, 31, 12, 0.64)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x + 6, y + 16);
+      ctx.lineTo(x + w - 6, y + 16);
+      ctx.moveTo(x + 6, y + h - 18);
+      ctx.lineTo(x + w - 6, y + h - 18);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(80, 35, 13, 0.5)";
+      for (let i = 0; i < 8; i += 1) {
+        const rustX = x + 8 + ((i * 23 + stripe * 9) % Math.max(12, w - 16));
+        const rustY = y + 16 + ((i * 17) % Math.max(12, h - 36));
+        ctx.fillRect(rustX, rustY, 4 + (i % 3), 2 + (i % 2));
+      }
+
+      drawRadiationMark(x + w * 0.5, y + h * 0.52, Math.min(w, h) * 0.2);
+    }
+
+    function drawRadiationMark(cx, cy, r) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = "#2a2110";
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      for (let i = 0; i < 3; i += 1) {
+        ctx.rotate((Math.PI * 2) / 3);
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.34);
+        ctx.arc(0, 0, r, -Math.PI * 0.42, -Math.PI * 0.08);
+        ctx.lineTo(0, -r * 0.32);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawCaps() {
+      for (const cap of state.caps) {
+        ctx.save();
+        ctx.translate(cap.x, cap.y);
+        const sprite = coinSprites[cap.sprite];
+        const flip = Math.cos(cap.spin);
+        const widthScale = 0.16 + Math.abs(flip) * 0.84;
+        ctx.scale(widthScale * Math.sign(flip || 1), 1);
+        if (sprite && sprite.complete && sprite.naturalWidth) {
+          const size = cap.r * 3;
+          ctx.shadowColor = "rgba(255, 232, 138, 0.42)";
+          ctx.shadowBlur = 10;
+          ctx.drawImage(sprite, -size * 0.5, -size * 0.5, size, size);
+          ctx.shadowBlur = 0;
+          drawCapShine(size, cap.spin);
+        } else {
+          drawFallbackCap(cap.r);
+        }
+        ctx.restore();
+      }
+    }
+
+    function drawCapShine(size, spin) {
+      const sweep = Math.sin(spin) * size * 0.18;
+      const shine = ctx.createLinearGradient(-size * 0.5 + sweep, -size * 0.45, size * 0.28 + sweep, size * 0.36);
+      shine.addColorStop(0, "rgba(255, 255, 255, 0)");
+      shine.addColorStop(0.48, "rgba(255, 255, 210, 0.3)");
+      shine.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = shine;
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.46, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    function drawFallbackCap(radius) {
+      ctx.fillStyle = "#b9802d";
+      ctx.strokeStyle = "#ffe08a";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.34)";
+      ctx.fillRect(-2, -radius + 3, 4, radius * 2 - 6);
+    }
+
+    function drawCharacterImage(character, x, y, spriteW, rotation, glowing) {
+      const image = character.image;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+
+      if (image.complete && image.naturalWidth) {
+        const spriteH = spriteW * (image.naturalHeight / image.naturalWidth);
+        ctx.shadowColor = glowing ? "rgba(156, 255, 109, 0.45)" : "rgba(156, 255, 109, 0.24)";
+        ctx.shadowBlur = glowing ? 14 : 8;
+        ctx.drawImage(image, -spriteW * 0.5, -spriteH * 0.5, spriteW, spriteH);
+        ctx.shadowBlur = 0;
+      } else {
+        drawFallbackPlayer(state.player);
+      }
+
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      const p = state.player;
+      const character = characters[state.selectedCharacter] || characters[0];
+      if (character.image.complete && character.image.naturalWidth) {
+        drawCharacterImage(character, p.x, p.y, gameplaySpriteWidth(character), p.rotation, true);
+        return;
+      }
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      drawFallbackPlayer(p);
+      ctx.restore();
+    }
+
+    function gameplaySpriteWidth(character) {
+      const image = character.image;
+      const baseW = Math.min(character.spriteW, GAMEPLAY_SPRITE_MAX_W);
+      if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
+        return baseW;
+      }
+      const ratio = image.naturalHeight / image.naturalWidth;
+      return Math.min(baseW, GAMEPLAY_SPRITE_MAX_H / ratio);
+    }
+
+    function drawFallbackPlayer(p) {
+      ctx.fillStyle = "#1f2b1d";
+      ctx.strokeStyle = "#9cff6d";
+      ctx.lineWidth = 3;
+      roundRect(-24, -30, 56, 58, 8, true, true);
+
+      ctx.fillStyle = "#0c190e";
+      roundRect(-14, -20, 35, 28, 4, true, true);
+      ctx.fillStyle = "#9cff6d";
+      ctx.font = "700 9px Courier New";
+      ctx.textAlign = "center";
+      ctx.fillText("STAT", 4, -4);
+
+      ctx.fillStyle = "#ffc857";
+      ctx.beginPath();
+      ctx.arc(20, 18, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#4b5a39";
+      roundRect(-43, -18, 18, 36, 5, true, true);
+      ctx.fillStyle = "#6f7f56";
+      roundRect(-56, -10, 15, 20, 4, true, true);
+
+      const flame = state.phase === "running" && (p.vy < -80 || Math.sin(state.time * 24) > 0);
+      if (flame) {
+        const flameSize = 24 + Math.sin(state.time * 32) * 6;
+        ctx.fillStyle = "#ffc857";
+        ctx.beginPath();
+        ctx.moveTo(-55, 0);
+        ctx.lineTo(-55 - flameSize, -12);
+        ctx.lineTo(-55 - flameSize * 0.7, 0);
+        ctx.lineTo(-55 - flameSize, 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#ff5d4d";
+        ctx.beginPath();
+        ctx.moveTo(-55, 0);
+        ctx.lineTo(-55 - flameSize * 0.58, -7);
+        ctx.lineTo(-55 - flameSize * 0.42, 0);
+        ctx.lineTo(-55 - flameSize * 0.58, 7);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    function drawParticles() {
+      for (const particle of state.particles) {
+        const alpha = clamp(particle.life / particle.maxLife, 0, 1);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = particle.color;
+        ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawHudOverlay() {
+      if (isMobileCabinet()) {
+        return;
+      }
+      ctx.strokeStyle = "rgba(156, 255, 109, 0.34)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(16, 16, state.width - 32, state.height - 74);
+
+      ctx.fillStyle = "rgba(156, 255, 109, 0.86)";
+      ctx.font = "700 18px Courier New";
+      ctx.textAlign = "left";
+      ctx.fillText(`SCORE ${state.score}`, 28, 44);
+      ctx.textAlign = "right";
+      ctx.fillText(`BEST ${Math.max(state.best, state.score)}`, state.width - 28, 44);
+      drawChargeMeter();
+    }
+
+    function drawChargeMeter() {
+      const meterW = clamp(state.width * 0.42, 132, 250);
+      const meterH = meterW * (113 / 556);
+      const x = (state.width - meterW) / 2;
+      const y = 24;
+      const charge = clamp(state.player.charge, 0, 1);
+
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.font = "700 10px Courier New";
+      ctx.fillStyle = "rgba(217, 255, 208, 0.74)";
+      ctx.fillText("CORE CHARGE", state.width / 2, y - 8);
+
+      if (coreChargerImage.complete && coreChargerImage.naturalWidth) {
+        ctx.drawImage(coreChargerImage, x, y, meterW, meterH);
+
+        const fillX = x + meterW * 0.1;
+        const fillY = y + meterH * 0.26;
+        const fillW = Math.max(0, meterW * 0.77 * charge);
+        const fillH = meterH * 0.26;
+        const fill = ctx.createLinearGradient(fillX, 0, fillX + meterW * 0.77, 0);
+        fill.addColorStop(0, "#ff5d4d");
+        fill.addColorStop(0.48, "#ffc857");
+        fill.addColorStop(1, "#9cff6d");
+        ctx.globalAlpha = 0.82;
+        ctx.fillStyle = fill;
+        roundRect(fillX, fillY, fillW, fillH, 2, true, false);
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = "rgba(5, 12, 6, 0.72)";
+        ctx.strokeStyle = charge < BOOST_COST ? "rgba(255, 93, 77, 0.82)" : "rgba(156, 255, 109, 0.62)";
+        ctx.lineWidth = 2;
+        roundRect(x, y, meterW, 12, 3, true, true);
+
+        const fillW = Math.max(0, (meterW - 4) * charge);
+        const fill = ctx.createLinearGradient(x, 0, x + meterW, 0);
+        fill.addColorStop(0, "#ff5d4d");
+        fill.addColorStop(0.48, "#ffc857");
+        fill.addColorStop(1, "#9cff6d");
+        ctx.fillStyle = fill;
+        roundRect(x + 2, y + 2, fillW, 8, 2, true, false);
+      }
+
+      ctx.fillStyle = charge < BOOST_COST ? "#ff8a78" : "#9cff6d";
+      ctx.font = "700 10px Courier New";
+      ctx.fillText(`${Math.round(charge * 100)}%`, state.width / 2, y + meterH + 12);
+
+      const capProgress = state.capsCollected % CAP_MILESTONE;
+      ctx.fillStyle = "rgba(255, 200, 87, 0.86)";
+      ctx.fillText(`CAPS ${capProgress}/${CAP_MILESTONE}`, state.width / 2, y + meterH + 25);
+      ctx.restore();
+    }
+
+    function drawMessage(title, detail) {
+      const boxW = clamp(state.width * 0.62, 270, 540);
+      const boxH = 138;
+      const x = (state.width - boxW) / 2;
+      const y = (state.height - boxH) / 2;
+
+      ctx.fillStyle = "rgba(5, 12, 6, 0.94)";
+      ctx.strokeStyle = "rgba(156, 255, 109, 0.7)";
+      ctx.lineWidth = 2;
+      roundRect(x, y, boxW, boxH, 6, true, true);
+
+      ctx.fillStyle = "#9cff6d";
+      ctx.textAlign = "center";
+      fitMonoFont(title, 28, 18, boxW - 30);
+      ctx.fillText(title, state.width / 2, y + 54);
+      ctx.fillStyle = "rgba(217, 255, 208, 0.78)";
+      fitMonoFont(detail, 15, 11, boxW - 28);
+      ctx.fillText(detail, state.width / 2, y + 92);
+    }
+
+    function drawGameOverScreen() {
+      ctx.save();
+      if (gameOverImage.complete && gameOverImage.naturalWidth) {
+        drawCoverImage(gameOverImage, 0, 0, state.width, state.height);
+      } else {
+        ctx.fillStyle = "#050505";
+        ctx.fillRect(0, 0, state.width, state.height);
+      }
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.36)";
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      fitMonoFont("GAME OVER", 82, 42, state.width - 52);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.82)";
+      ctx.strokeText("GAME OVER", state.width / 2, state.height * 0.5);
+      ctx.fillStyle = "#ff1d1d";
+      ctx.shadowColor = "rgba(255, 0, 0, 0.8)";
+      ctx.shadowBlur = 18;
+      ctx.fillText("GAME OVER", state.width / 2, state.height * 0.5);
+      ctx.restore();
+    }
+
+    function drawLeaderboardPanel() {
+      const board = state.leaderboard;
+      const boxW = clamp(state.width * 0.78, 300, 610);
+      const boxH = clamp(state.height * 0.74, 258, 390);
+      const x = (state.width - boxW) / 2;
+      const y = (state.height - boxH) / 2;
+      const pad = clamp(boxW * 0.055, 14, 24);
+      const buttonH = clamp(boxH * 0.105, 30, 40);
+      const inputH = buttonH;
+      const bottomY = y + boxH - pad;
+      const inputW = clamp(boxW * 0.28, 78, 126);
+      const buttonW = clamp(boxW * 0.24, 78, 116);
+      const inputX = x + pad;
+      const submitX = inputX + inputW + 8;
+      const restartX = x + boxW - pad - buttonW;
+      const controlsY = bottomY - buttonH;
+      const rowsTop = y + pad + 96;
+      const rowH = clamp((controlsY - rowsTop - 18) / LEADERBOARD_LIMIT, 19, 33);
+
+      board.inputRect = { x: inputX, y: controlsY, w: inputW, h: inputH };
+      board.submitRect = board.submitted ? null : { x: submitX, y: controlsY, w: buttonW, h: buttonH };
+      board.restartRect = { x: restartX, y: controlsY, w: buttonW, h: buttonH };
+
+      ctx.save();
+      ctx.fillStyle = "rgba(5, 12, 6, 0.95)";
+      ctx.strokeStyle = "rgba(156, 255, 109, 0.72)";
+      ctx.lineWidth = 2;
+      roundRect(x, y, boxW, boxH, 8, true, true);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#9cff6d";
+      fitMonoFont("DAILY TOP 5", 28, 18, boxW - pad * 2);
+      ctx.fillText("DAILY TOP 5", state.width / 2, y + pad + 24);
+      ctx.fillStyle = "rgba(217, 255, 208, 0.76)";
+      const boardDateLabel = displayBoardDate(board.dateKey || todayBoardKey());
+      fitMonoFont(`UTC ${boardDateLabel}   SCORE ${state.score}`, 14, 9, boxW - pad * 2);
+      ctx.fillText(`UTC ${boardDateLabel}   SCORE ${state.score}`, state.width / 2, y + pad + 48);
+      ctx.fillStyle = "#ffc857";
+      const resetText = `RESETS IN ${leaderboardResetCountdown()}`;
+      fitMonoFont(resetText, 16, 9, boxW - pad * 2);
+      ctx.fillText(resetText, state.width / 2, y + pad + 70);
+
+      ctx.textAlign = "left";
+      const entries = board.loading ? [] : board.entries;
+      for (let i = 0; i < LEADERBOARD_LIMIT; i += 1) {
+        const rowY = rowsTop + i * rowH;
+        ctx.fillStyle = i % 2 ? "rgba(156, 255, 109, 0.055)" : "rgba(156, 255, 109, 0.1)";
+        roundRect(x + pad, rowY - 15, boxW - pad * 2, rowH - 3, 4, true, false);
+        const entry = entries[i];
+        ctx.fillStyle = entry ? "#d9ffd0" : "rgba(217, 255, 208, 0.36)";
+        fitMonoFont(entry ? `${i + 1}. ${entry.initials}` : `${i + 1}. ---`, 16, 9, boxW * 0.42);
+        ctx.fillText(entry ? `${i + 1}. ${entry.initials}` : `${i + 1}. ---`, x + pad + 10, rowY);
+        ctx.textAlign = "right";
+        fitMonoFont(entry ? String(entry.score) : "--", 16, 9, boxW * 0.2);
+        ctx.fillText(entry ? String(entry.score) : "--", x + boxW - pad - 10, rowY);
+        ctx.textAlign = "left";
+      }
+
+      const status = board.loading ? "Loading..." : board.status;
+      ctx.fillStyle = status.includes("Firebase") || status.includes("unavailable") || status.includes("failed") ? "#ffc857" : "rgba(217, 255, 208, 0.78)";
+      ctx.textAlign = "center";
+      fitMonoFont(status, 12, 8, boxW - pad * 2);
+      ctx.fillText(status, state.width / 2, controlsY - 12);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.34)";
+      ctx.strokeStyle = "rgba(156, 255, 109, 0.56)";
+      roundRect(inputX, controlsY, inputW, inputH, 5, true, true);
+      ctx.fillStyle = "#9cff6d";
+      fitMonoFont(board.initials || "INITIALS", 14, 8, inputW - 10);
+      ctx.fillText(board.initials || "INITIALS", inputX + inputW / 2, controlsY + inputH * 0.66);
+
+      if (!board.submitted) {
+        ctx.fillStyle = "rgba(156, 255, 109, 0.12)";
+        ctx.strokeStyle = "rgba(156, 255, 109, 0.64)";
+        roundRect(submitX, controlsY, buttonW, buttonH, 5, true, true);
+        ctx.fillStyle = "#9cff6d";
+        fitMonoFont("SUBMIT", 13, 8, buttonW - 10);
+        ctx.fillText("SUBMIT", submitX + buttonW / 2, controlsY + buttonH * 0.66);
+      } else {
+        ctx.fillStyle = "#ffc857";
+        fitMonoFont("SUBMITTED", 12, 8, buttonW + 10);
+        ctx.fillText("SUBMITTED", submitX + buttonW / 2, controlsY + buttonH * 0.66);
+      }
+
+      ctx.fillStyle = "rgba(255, 200, 87, 0.1)";
+      ctx.strokeStyle = "rgba(255, 200, 87, 0.68)";
+      roundRect(restartX, controlsY, buttonW, buttonH, 5, true, true);
+      ctx.fillStyle = "#ffc857";
+      fitMonoFont("RESTART", 13, 8, buttonW - 10);
+      ctx.fillText("RESTART", restartX + buttonW / 2, controlsY + buttonH * 0.66);
+      ctx.restore();
+    }
+
+    function fitMonoFont(text, maxPx, minPx, maxWidth) {
+      let size = maxPx;
+      do {
+        ctx.font = `700 ${size}px Courier New`;
+        if (ctx.measureText(text).width <= maxWidth || size <= minPx) {
+          return;
+        }
+        size -= 1;
+      } while (size >= minPx);
+    }
+
+    function roundRect(x, y, w, h, r, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    function loop(now) {
+      const dt = Math.min(0.033, (now - state.last) / 1000 || 0);
+      state.last = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function useControl(event, action) {
+      event.preventDefault();
+      event.stopPropagation();
+      unlockAudio();
+      action();
+    }
+
+    function canvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    }
+
+    function isSelectSwipePointer(event) {
+      return event.pointerType === "touch" || event.pointerType === "pen";
+    }
+
+    function promptForInitials() {
+      const typed = window.prompt("Enter initials for the daily Top 5:", state.leaderboard.initials || "");
+      if (typed !== null) {
+        state.leaderboard.initials = cleanInitials(typed);
+      }
+    }
+
+    function handleLeaderboardPointer(point) {
+      const board = state.leaderboard;
+      if (pointInRect(point, board.inputRect)) {
+        promptForInitials();
+        return true;
+      }
+      if (pointInRect(point, board.submitRect)) {
+        submitLeaderboardScore();
+        return true;
+      }
+      if (pointInRect(point, board.restartRect)) {
+        resetGame();
+        return true;
+      }
+      return true;
+    }
+
+    function handleSelectPointer(point, now = performance.now()) {
+      const pageHit = state.pageButtonRects.find((rect) => pointInRect(point, rect));
+      if (pageHit) {
+        showCharacterPage(state.characterPage + pageHit.direction);
+        playTone("select");
+        return;
+      }
+
+      const hit = state.selectionRects.find((rect) => (
+        point.x >= rect.x &&
+        point.x <= rect.x + rect.w &&
+        point.y >= rect.y &&
+        point.y <= rect.y + rect.h
+      ));
+      if (!hit) {
+        resetSelectTapTracker();
+        return;
+      }
+
+      const isDoubleActivate = (
+        hit.index === state.selectedCharacter &&
+        hit.index === state.lastSelectTapIndex &&
+        now - state.lastSelectTapTime <= SELECT_DOUBLE_ACTIVATE_MS
+      );
+
+      if (isDoubleActivate) {
+        chooseCharacter(hit.index);
+        resetGame();
+        return;
+      }
+
+      state.selectedCharacter = hit.index;
+      state.lastSelectTapIndex = hit.index;
+      state.lastSelectTapTime = now;
+      playTone("select");
+      updateHud();
+    }
+
+    function handleCanvasPointer(event) {
+      if (state.phase === "select" && isSelectSwipePointer(event)) {
+        useControl(event, () => {
+          state.selectSwipe = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            startTime: performance.now()
+          };
+          if (canvas.setPointerCapture) {
+            canvas.setPointerCapture(event.pointerId);
+          }
+        });
+        return;
+      }
+
+      useControl(event, () => {
+        const point = canvasPoint(event);
+        if (state.phase === "intro") {
+          showCharacterSelect();
+          return;
+        }
+        if (state.phase === "select") {
+          handleSelectPointer(point);
+          return;
+        }
+        if (state.phase === "over" && state.gameOverTimer <= 0) {
+          handleLeaderboardPointer(point);
+          return;
+        }
+        thrust();
+      });
+    }
+
+    function handleCanvasPointerUp(event) {
+      if (!state.selectSwipe || event.pointerId !== state.selectSwipe.pointerId) {
+        return;
+      }
+      useControl(event, () => {
+        const swipe = state.selectSwipe;
+        state.selectSwipe = null;
+        if (canvas.releasePointerCapture) {
+          try {
+            canvas.releasePointerCapture(event.pointerId);
+          } catch (error) {
+            // Ignore release failures from browsers that already cleared capture.
+          }
+        }
+
+        if (state.phase !== "select") {
+          return;
+        }
+
+        const dx = event.clientX - swipe.startX;
+        const dy = event.clientY - swipe.startY;
+        const horizontal = Math.abs(dx);
+        const vertical = Math.abs(dy);
+        if (horizontal >= SELECT_SWIPE_MIN_PX && horizontal > vertical * 1.35) {
+          showCharacterPage(state.characterPage + (dx < 0 ? 1 : -1));
+          playTone("select");
+          return;
+        }
+
+        handleSelectPointer(canvasPoint(event), performance.now());
+      });
+    }
+
+    function cancelSelectSwipe(event) {
+      if (!state.selectSwipe || event.pointerId !== state.selectSwipe.pointerId) {
+        return;
+      }
+      state.selectSwipe = null;
+      resetSelectTapTracker();
+    }
+
+    function cycleCharacter(direction) {
+      if (state.phase !== "select") {
+        return;
+      }
+      const next = (state.selectedCharacter + direction + characters.length) % characters.length;
+      state.selectedCharacter = next;
+      state.characterPage = pageForCharacter(next);
+      resetSelectTapTracker();
+      playTone("select");
+      updateHud();
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("orientationchange", () => {
+      syncViewportHeight();
+      window.setTimeout(resizeCanvas, 250);
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", resizeCanvas);
+      window.visualViewport.addEventListener("scroll", resizeCanvas);
+    }
+    document.addEventListener("pointerdown", unlockAudio, { capture: true, passive: true });
+    document.addEventListener("touchend", unlockAudio, { capture: true, passive: true });
+    document.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+    document.addEventListener("contextmenu", (event) => event.preventDefault());
+    window.addEventListener("keydown", (event) => {
+      unlockAudio();
+      if (state.phase === "intro" && (event.code === "Enter" || event.code === "Space")) {
+        event.preventDefault();
+        showCharacterSelect();
+        return;
+      }
+      if (state.phase === "over" && state.gameOverTimer <= 0) {
+        if (event.code === "Enter") {
+          event.preventDefault();
+          submitLeaderboardScore();
+          return;
+        }
+        if (event.code === "Backspace") {
+          event.preventDefault();
+          state.leaderboard.initials = state.leaderboard.initials.slice(0, -1);
+          return;
+        }
+        if (/^[a-z0-9]$/i.test(event.key) && state.leaderboard.initials.length < 10) {
+          event.preventDefault();
+          state.leaderboard.initials = cleanInitials(state.leaderboard.initials + event.key);
+          return;
+        }
+      }
+      if (event.code === "Space" || event.code === "ArrowUp") {
+        event.preventDefault();
+        thrust();
+      }
+      if (event.code === "ArrowLeft") {
+        event.preventDefault();
+        cycleCharacter(-1);
+      }
+      if (event.code === "ArrowRight") {
+        event.preventDefault();
+        cycleCharacter(1);
+      }
+      if (event.code === "KeyP") {
+        togglePause();
+      }
+      if (event.code === "Enter" && state.phase !== "running") {
+        resetGame();
+      }
+    });
+    canvas.addEventListener("pointerdown", handleCanvasPointer, { passive: false });
+    canvas.addEventListener("pointerup", handleCanvasPointerUp, { passive: false });
+    canvas.addEventListener("pointercancel", cancelSelectSwipe, { passive: false });
+    startButton.addEventListener("click", (event) => useControl(event, resetGame));
+    pauseButton.addEventListener("click", (event) => useControl(event, togglePause));
+    soundButton.addEventListener("click", (event) => useControl(event, toggleSound));
+    statControl.addEventListener("click", (event) => useControl(event, statControlAction));
+    dataControl.addEventListener("click", (event) => useControl(event, togglePause));
+    radioControl.addEventListener("click", (event) => useControl(event, radioControlAction));
+    mobileRestartButton.addEventListener("pointerdown", (event) => useControl(event, resetGame), { passive: false });
+    mobileBoostButton.addEventListener("pointerdown", (event) => useControl(event, thrust), { passive: false });
+    mobilePauseButton.addEventListener("pointerdown", (event) => useControl(event, togglePause), { passive: false });
+
+    syncViewportHeight();
+    resizeCanvas();
+    updateHud();
+    requestAnimationFrame((now) => {
+      state.last = now;
+      requestAnimationFrame(loop);
+    });
+  </script>
+</body>
+</html>
