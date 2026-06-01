@@ -611,6 +611,7 @@
       }
 
       body[data-phase="intro"] .pip-nav,
+      body[data-phase="mode"] .pip-nav,
       body[data-phase="select"] .pip-nav,
       body[data-phase="scoreboard"] .pip-nav,
       body[data-phase="over"] .pip-nav {
@@ -827,8 +828,8 @@
     const pettywiselolSprite = new Image();
     pettywiselolSprite.src = "assets/pettywiselol.png";
     const backgroundSpritePaths = [
-      "assets/wasteland-background-clean.png",
       "assets/wulfzx-underground-background.png",
+      "assets/wulfzx-vault-day-background.png",
       "assets/wulfzx-nightfall-background.png",
       "assets/wulfzx-moon-background.png",
       "assets/wulfzx-storm-background.png",
@@ -837,7 +838,9 @@
       "assets/wulfzx-sunset-background.png",
       "assets/wulfzx-golden-hour-background.png",
       "assets/wulfzx-wcx-day-background.png",
-      "assets/wulfzx-green-storm-background.png"
+      "assets/wulfzx-green-storm-background.png",
+      "assets/wulfzx-autumn-background.png",
+      "assets/wulfzx-dust-storm-background.png"
     ];
     const backgroundImages = backgroundSpritePaths.map((src) => {
       const image = new Image();
@@ -902,6 +905,8 @@
     const BACKGROUND_JUMPS_PER_SCENE = 8;
     const BACKGROUND_TRANSITION_SECONDS = 1.8;
     const BACKGROUND_LAYER_ZOOM = 1.08;
+    const EASY_WORLD_WIDTH = 960;
+    const EASY_WORLD_HEIGHT = 640;
     const GAMEPLAY_SPRITE_MAX_W = 90;
     const GAMEPLAY_SPRITE_MAX_H = 72;
     const GAMEPLAY_CACHE_BOX = 144;
@@ -913,8 +918,12 @@
 
     const state = {
       phase: "intro",
+      gameMode: "hard",
       width: 960,
       height: 640,
+      displayWidth: 960,
+      displayHeight: 640,
+      viewport: { x: 0, y: 0, scale: 1, width: 960, height: 640 },
       time: 0,
       backgroundSceneIndex: 0,
       backgroundPreviousSceneIndex: 0,
@@ -938,6 +947,9 @@
       selectionRects: [],
       pageButtonRects: [],
       scoreboardButtonRect: null,
+      changeModeButtonRect: null,
+      modeButtonRects: [],
+      modeFocus: "easy",
       selectSwipe: null,
       lastSelectTapIndex: -1,
       lastSelectTapTime: 0,
@@ -1200,6 +1212,52 @@
       );
     }
 
+    function usesFixedWorld() {
+      return state.gameMode === "easy";
+    }
+
+    function modeLabel() {
+      return state.gameMode === "easy" ? "EASY MODE" : "HARD MODE";
+    }
+
+    function modeDisplayName(mode) {
+      return mode === "easy" ? "EASY MODE" : "HARD MODE";
+    }
+
+    function resetInputRects() {
+      state.selectionRects = [];
+      state.pageButtonRects = [];
+      state.scoreboardButtonRect = null;
+      state.changeModeButtonRect = null;
+      state.modeButtonRects = [];
+    }
+
+    function applyViewportSize(cssWidth, cssHeight) {
+      state.displayWidth = cssWidth;
+      state.displayHeight = cssHeight;
+
+      if (usesFixedWorld()) {
+        const fitScale = Math.min(cssWidth / EASY_WORLD_WIDTH, cssHeight / EASY_WORLD_HEIGHT);
+        const safeScale = Number.isFinite(fitScale) && fitScale > 0 ? fitScale : 1;
+        const viewportWidth = EASY_WORLD_WIDTH * safeScale;
+        const viewportHeight = EASY_WORLD_HEIGHT * safeScale;
+        state.width = EASY_WORLD_WIDTH;
+        state.height = EASY_WORLD_HEIGHT;
+        state.viewport = {
+          x: (cssWidth - viewportWidth) * 0.5,
+          y: (cssHeight - viewportHeight) * 0.5,
+          scale: safeScale,
+          width: viewportWidth,
+          height: viewportHeight
+        };
+        return;
+      }
+
+      state.width = cssWidth;
+      state.height = cssHeight;
+      state.viewport = { x: 0, y: 0, scale: 1, width: cssWidth, height: cssHeight };
+    }
+
     function ensureAudio() {
       if (!state.soundEnabled) {
         return null;
@@ -1378,6 +1436,7 @@
       state.obstacles = [];
       state.caps = [];
       state.particles = [];
+      resetInputRects();
       state.leaderboard.submitted = false;
       state.leaderboard.inputRect = null;
       state.leaderboard.submitRect = null;
@@ -1397,6 +1456,22 @@
       state.characterPage = pageForCharacter(state.selectedCharacter);
       clearRun();
       state.phase = "ready";
+      playTone("select");
+      updateHud();
+    }
+
+    function chooseGameMode(mode) {
+      state.gameMode = mode === "easy" ? "easy" : "hard";
+      state.modeFocus = state.gameMode;
+      resizeCanvas();
+      showCharacterSelect();
+    }
+
+    function showModeSelect() {
+      resetSelectTapTracker();
+      clearRun();
+      state.phase = "mode";
+      state.modeFocus = state.gameMode;
       playTone("select");
       updateHud();
     }
@@ -1429,7 +1504,12 @@
       }
 
       if (state.phase === "intro") {
-        showCharacterSelect();
+        showModeSelect();
+        return;
+      }
+
+      if (state.phase === "mode") {
+        chooseGameMode(state.modeFocus);
         return;
       }
 
@@ -1461,8 +1541,7 @@
       const scale = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(1, Math.floor(rect.width * scale));
       canvas.height = Math.max(1, Math.floor(rect.height * scale));
-      state.width = rect.width;
-      state.height = rect.height;
+      applyViewportSize(rect.width, rect.height);
       ctx.setTransform(scale, 0, 0, scale, 0, 0);
       resetBackgroundLayerCache();
       resetGameplaySpriteCache();
@@ -1600,13 +1679,17 @@
       if (state.phase !== "running") {
         return;
       }
-      if (state.player.charge < BOOST_COST) {
+      if (!usesFixedWorld() && state.player.charge < BOOST_COST) {
         playTone("score");
         return;
       }
 
       state.player.vy = -350;
-      state.player.charge = clamp(state.player.charge - BOOST_COST, 0, 1);
+      if (usesFixedWorld()) {
+        state.player.charge = 1;
+      } else {
+        state.player.charge = clamp(state.player.charge - BOOST_COST, 0, 1);
+      }
       countBackgroundJump();
       playTone("boost");
       burst(state.player.x - 30, state.player.y + 16, 12, "#ffc857");
@@ -1732,7 +1815,7 @@
       player.vy += gravity * dt;
       player.y += player.vy * dt;
       player.rotation = clamp(player.vy / 650, -0.5, 0.72);
-      player.charge = clamp(player.charge + dt * 0.22, 0, 1);
+      player.charge = usesFixedWorld() ? 1 : clamp(player.charge + dt * 0.22, 0, 1);
 
       const speed = state.speed + Math.min(170, state.score * 7.2);
       state.distance += speed * dt * 0.28;
@@ -1837,6 +1920,7 @@
     function updateHud() {
       const phaseLabel = {
         intro: "Intro",
+        mode: "Mode",
         select: "Select",
         ready: "Ready",
         running: "Running",
@@ -1846,7 +1930,9 @@
       }[state.phase];
 
       document.body.dataset.phase = state.phase;
-      modeText.textContent = phaseLabel;
+      modeText.textContent = state.phase === "mode" || state.phase === "select" || state.phase === "ready" || state.phase === "running"
+        ? `${phaseLabel} / ${modeDisplayName(state.gameMode)}`
+        : phaseLabel;
       scoreText.textContent = String(state.score);
       bestText.textContent = String(Math.max(state.best, state.score));
       const charge = Math.round(state.player.charge * 100);
@@ -1860,9 +1946,9 @@
       mobileCapsText.textContent = `Caps ${capProgress}/${CAP_MILESTONE}`;
       mobileChargeBar.style.transform = `scaleX(${state.player.charge})`;
       mobileDistanceText.textContent = String(Math.floor(state.distance));
-      startButton.textContent = state.phase === "scoreboard" ? "Back" : state.phase === "select" ? "Choose" : state.phase === "running" ? "Restart" : "Start";
+      startButton.textContent = state.phase === "scoreboard" ? "Back" : state.phase === "mode" ? "Mode" : state.phase === "select" ? "Choose" : state.phase === "running" ? "Restart" : "Start";
       pauseButton.textContent = state.phase === "paused" ? "Resume" : "Pause";
-      mobileRestartButton.textContent = state.phase === "scoreboard" ? "Back" : state.phase === "intro" ? "Start" : state.phase === "select" ? "Choose" : state.phase === "ready" ? "Start" : "Restart";
+      mobileRestartButton.textContent = state.phase === "scoreboard" ? "Back" : state.phase === "intro" ? "Start" : state.phase === "mode" ? "Mode" : state.phase === "select" ? "Choose" : state.phase === "ready" ? "Start" : "Restart";
       mobilePauseButton.textContent = state.phase === "paused" ? "Resume" : "Pause";
       statControl.textContent = state.phase === "running" ? "Start" : "Start";
       dataControl.textContent = state.phase === "paused" ? "Resume" : "Pause";
@@ -1875,22 +1961,49 @@
       const sx = state.shake ? rand(-state.shake, state.shake) : 0;
       const sy = state.shake ? rand(-state.shake, state.shake) : 0;
       ctx.save();
-      ctx.clearRect(0, 0, state.width, state.height);
+      ctx.clearRect(0, 0, state.displayWidth, state.displayHeight);
+      if (usesFixedWorld()) {
+        ctx.fillStyle = "#050605";
+        ctx.fillRect(0, 0, state.displayWidth, state.displayHeight);
+        ctx.save();
+        ctx.translate(state.viewport.x, state.viewport.y);
+        ctx.scale(state.viewport.scale, state.viewport.scale);
+        ctx.beginPath();
+        ctx.rect(0, 0, state.width, state.height);
+        ctx.clip();
+      }
       ctx.translate(sx, sy);
 
       drawBackground();
       if (state.phase === "intro") {
         drawIntroScreen();
+        if (usesFixedWorld()) {
+          ctx.restore();
+        }
+        ctx.restore();
+        return;
+      }
+      if (state.phase === "mode") {
+        drawModeSelect();
+        if (usesFixedWorld()) {
+          ctx.restore();
+        }
         ctx.restore();
         return;
       }
       if (state.phase === "select") {
         drawCharacterSelect();
+        if (usesFixedWorld()) {
+          ctx.restore();
+        }
         ctx.restore();
         return;
       }
       if (state.phase === "scoreboard") {
         drawLeaderboardPanel({ viewer: true });
+        if (usesFixedWorld()) {
+          ctx.restore();
+        }
         ctx.restore();
         return;
       }
@@ -1913,6 +2026,9 @@
         }
       }
 
+      if (usesFixedWorld()) {
+        ctx.restore();
+      }
       ctx.restore();
     }
 
@@ -2042,6 +2158,70 @@
       ctx.restore();
     }
 
+    function drawModeSelect() {
+      ctx.save();
+      ctx.fillStyle = "rgba(5, 12, 6, 0.46)";
+      ctx.fillRect(0, 0, state.width, state.height);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#9cff6d";
+      ctx.shadowColor = "rgba(156, 255, 109, 0.55)";
+      ctx.shadowBlur = 14;
+      fitMonoFont("SELECT MODE", 34, 20, state.width - 44);
+      ctx.fillText("SELECT MODE", state.width / 2, clamp(state.height * 0.19, 54, 92));
+      ctx.shadowBlur = 0;
+
+      const cardGap = clamp(state.width * 0.045, 18, 34);
+      const cardW = clamp((state.width - cardGap - 80) / 2, 190, 300);
+      const cardH = clamp(state.height * 0.28, 128, 178);
+      const totalW = cardW * 2 + cardGap;
+      const startX = (state.width - totalW) / 2;
+      const y = clamp(state.height * 0.36, 134, state.height - cardH - 86);
+      const modes = [
+        {
+          mode: "easy",
+          title: "EASY MODE",
+          lines: ["STANDARD SCREEN", "UNLIMITED BOOST"]
+        },
+        {
+          mode: "hard",
+          title: "HARD MODE",
+          lines: ["FULL SCREEN PHYSICS", "CORE CHARGE COSTS"]
+        }
+      ];
+
+      state.modeButtonRects = modes.map((item, index) => {
+        const rect = { x: startX + index * (cardW + cardGap), y, w: cardW, h: cardH, mode: item.mode };
+        const selected = state.modeFocus === item.mode;
+        ctx.fillStyle = selected ? "rgba(156, 255, 109, 0.16)" : "rgba(5, 12, 6, 0.88)";
+        ctx.strokeStyle = selected ? "#9cff6d" : "rgba(156, 255, 109, 0.42)";
+        ctx.lineWidth = selected ? 3 : 2;
+        ctx.shadowColor = selected ? "rgba(156, 255, 109, 0.38)" : "transparent";
+        ctx.shadowBlur = selected ? 18 : 0;
+        roundRect(rect.x, rect.y, rect.w, rect.h, 8, true, true);
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = selected ? "#ffffff" : "#9cff6d";
+        fitMonoFont(item.title, 24, 14, rect.w - 22);
+        ctx.fillText(item.title, rect.x + rect.w / 2, rect.y + 42);
+
+        ctx.fillStyle = "rgba(217, 255, 208, 0.78)";
+        item.lines.forEach((line, lineIndex) => {
+          fitMonoFont(line, 15, 9, rect.w - 24);
+          ctx.fillText(line, rect.x + rect.w / 2, rect.y + 78 + lineIndex * 24);
+        });
+
+        ctx.fillStyle = selected ? "#ffc857" : "rgba(217, 255, 208, 0.7)";
+        fitMonoFont(selected ? "READY" : "SELECT", 15, 9, rect.w - 22);
+        ctx.fillText(selected ? "READY" : "SELECT", rect.x + rect.w / 2, rect.y + rect.h - 20);
+        return rect;
+      });
+
+      ctx.fillStyle = "rgba(217, 255, 208, 0.78)";
+      fitMonoFont("CLICK/TAP A MODE TO CONTINUE", 15, 9, state.width - 42);
+      ctx.fillText("CLICK/TAP A MODE TO CONTINUE", state.width / 2, state.height - 34);
+      ctx.restore();
+    }
+
     function drawBackgroundLayer(index, fallbackImage, offsetY) {
       const layer = getBackgroundLayer(index);
       if (!layer) {
@@ -2117,6 +2297,9 @@
       fitMonoFont("CHOOSE YOUR GOOSE", 30, 18, state.width - 44);
       ctx.fillText("CHOOSE YOUR GOOSE", state.width / 2, titleY);
       ctx.shadowBlur = 0;
+      ctx.fillStyle = state.gameMode === "easy" ? "#ffc857" : "rgba(217, 255, 208, 0.84)";
+      fitMonoFont(modeLabel(), 14, 9, state.width - 60);
+      ctx.fillText(modeLabel(), state.width / 2, titleY + 17);
 
       const pageCount = characterPageCount();
       const range = visibleCharacterRange();
@@ -2132,7 +2315,7 @@
       const pageControlY = hintY - 25;
       const boardButtonH = clamp(state.height * 0.046, 18, 24);
       const boardControlY = pageCount > 1 ? pageControlY - boardButtonH - 8 : hintY - boardButtonH - 5;
-      const gridTop = clamp(titleY + 18, 52, state.height * 0.31);
+      const gridTop = clamp(titleY + 34, 64, state.height * 0.31);
       const gridBottom = boardControlY - 8;
       const cardW = Math.max(44, (state.width - sidePad * 2 - gapX * (columns - 1)) / columns);
       const cardH = clamp((gridBottom - gridTop - gapY * (rows - 1)) / rows, 62, 118);
@@ -2152,6 +2335,7 @@
       });
       state.pageButtonRects = [];
       state.scoreboardButtonRect = null;
+      state.changeModeButtonRect = null;
 
       if (pageCount > 1) {
         const buttonW = clamp(state.width * 0.095, 34, 48);
@@ -2177,14 +2361,24 @@
         ctx.fillText(pageLabel, centerX, pageControlY);
       }
 
-      const boardW = clamp(state.width * 0.28, 102, 154);
+      const boardW = clamp(state.width * 0.23, 96, 142);
+      const buttonGap = clamp(state.width * 0.018, 8, 14);
+      const changeW = clamp(state.width * 0.23, 98, 144);
+      const buttonsW = boardW + changeW + buttonGap;
       const boardRect = {
-        x: state.width / 2 - boardW / 2,
+        x: state.width / 2 - buttonsW / 2,
         y: boardControlY,
         w: boardW,
         h: boardButtonH
       };
+      const changeModeRect = {
+        x: boardRect.x + boardW + buttonGap,
+        y: boardControlY,
+        w: changeW,
+        h: boardButtonH
+      };
       state.scoreboardButtonRect = boardRect;
+      state.changeModeButtonRect = changeModeRect;
       ctx.fillStyle = "rgba(255, 200, 87, 0.11)";
       ctx.strokeStyle = "rgba(255, 200, 87, 0.64)";
       ctx.lineWidth = 2;
@@ -2192,6 +2386,13 @@
       ctx.fillStyle = "#ffc857";
       fitMonoFont("SCOREBOARD", 13, 8, boardRect.w - 12);
       ctx.fillText("SCOREBOARD", boardRect.x + boardRect.w / 2, boardRect.y + boardRect.h - 6);
+      ctx.fillStyle = "rgba(156, 255, 109, 0.11)";
+      ctx.strokeStyle = "rgba(156, 255, 109, 0.58)";
+      ctx.lineWidth = 2;
+      roundRect(changeModeRect.x, changeModeRect.y, changeModeRect.w, changeModeRect.h, 5, true, true);
+      ctx.fillStyle = "#9cff6d";
+      fitMonoFont("CHANGE MODE", 13, 8, changeModeRect.w - 12);
+      ctx.fillText("CHANGE MODE", changeModeRect.x + changeModeRect.w / 2, changeModeRect.y + changeModeRect.h - 6);
 
       ctx.fillStyle = "rgba(217, 255, 208, 0.78)";
       fitMonoFont("CLICK/TAP TO PREVIEW / DOUBLE TO LAUNCH", 13, 8, state.width - 36);
@@ -2826,9 +3027,17 @@
 
     function canvasPoint(event) {
       const rect = canvas.getBoundingClientRect();
+      const localX = event.clientX - rect.left;
+      const localY = event.clientY - rect.top;
+      if (usesFixedWorld()) {
+        return {
+          x: (localX - state.viewport.x) / state.viewport.scale,
+          y: (localY - state.viewport.y) / state.viewport.scale
+        };
+      }
       return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
+        x: localX,
+        y: localY
       };
     }
 
@@ -2868,7 +3077,20 @@
       return true;
     }
 
+    function handleModePointer(point) {
+      const hit = state.modeButtonRects.find((rect) => pointInRect(point, rect));
+      if (!hit) {
+        return;
+      }
+      chooseGameMode(hit.mode);
+    }
+
     function handleSelectPointer(point, now = performance.now()) {
+      if (pointInRect(point, state.changeModeButtonRect)) {
+        showModeSelect();
+        return;
+      }
+
       if (pointInRect(point, state.scoreboardButtonRect)) {
         showScoreboardViewer();
         return;
@@ -2930,7 +3152,11 @@
       useControl(event, () => {
         const point = canvasPoint(event);
         if (state.phase === "intro") {
-          showCharacterSelect();
+          showModeSelect();
+          return;
+        }
+        if (state.phase === "mode") {
+          handleModePointer(point);
           return;
         }
         if (state.phase === "select") {
@@ -3019,7 +3245,28 @@
       unlockAudio();
       if (state.phase === "intro" && (event.code === "Enter" || event.code === "Space")) {
         event.preventDefault();
-        showCharacterSelect();
+        showModeSelect();
+        return;
+      }
+      if (state.phase === "mode") {
+        if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
+          event.preventDefault();
+          state.modeFocus = state.modeFocus === "easy" ? "hard" : "easy";
+          playTone("select");
+          updateHud();
+          return;
+        }
+        if (event.code === "Enter" || event.code === "Space") {
+          event.preventDefault();
+          chooseGameMode(state.modeFocus);
+          return;
+        }
+        if (event.code === "Escape" || event.code === "Backspace") {
+          event.preventDefault();
+          state.phase = "intro";
+          updateHud();
+          return;
+        }
         return;
       }
       if (state.phase === "over" && state.gameOverTimer <= 0) {
