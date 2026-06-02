@@ -2454,8 +2454,9 @@
       state.characterPage = range.page;
       const visibleCharacters = characters.slice(range.start, range.end);
       const count = visibleCharacters.length;
-      const columns = pageCount > 1 ? 4 : count <= 4 ? count : 4;
-      const rows = pageCount > 1 ? 2 : Math.ceil(count / columns);
+      const mobileSparsePage = isMobileCabinet() && pageCount > 1 && count > 0 && count < 4;
+      const columns = Math.max(1, pageCount > 1 ? (mobileSparsePage ? count : 4) : count <= 4 ? count : 4);
+      const rows = pageCount > 1 ? (mobileSparsePage ? 1 : 2) : Math.ceil(count / columns);
       const sidePad = clamp(state.width * 0.035, 10, 18);
       const gapX = clamp(state.width * 0.018, 5, 10);
       const gapY = clamp(state.height * 0.025, 5, 9);
@@ -2559,16 +2560,35 @@
       roundRect(x, y, w, h, Math.min(7, w * 0.08, h * 0.12), true, true);
       ctx.shadowBlur = 0;
 
-      const imageY = y + h * 0.30;
-      const imageW = Math.min(w * 0.76, character.spriteW * 0.95, h * 0.82);
-      drawCharacterImage(character, x + w / 2, imageY, imageW, Math.sin(state.time * 2.4) * 0.06, selected);
-
       ctx.textAlign = "center";
       ctx.fillStyle = selected ? "#ffffff" : "#9cff6d";
       const titleLines = character.titleLines || [character.name.toUpperCase()];
       const lineHeight = clamp(h * 0.13, 8, 12);
       const nameMax = clamp(h * 0.16, 10, 14);
       const titleStart = y + h - 27 - Math.max(0, titleLines.length - 1) * lineHeight;
+      const imageTop = y + clamp(h * 0.08, 5, 10);
+      const imageBottom = titleStart - clamp(h * 0.08, 5, 9);
+      const imageBoxH = Math.max(18, imageBottom - imageTop);
+      const imageBoxW = w * 0.86;
+      const image = character.image;
+      let imageW = Math.min(imageBoxW, character.spriteW * 0.95);
+
+      if (image.complete && image.naturalWidth && image.naturalHeight) {
+        const imageRatio = image.naturalHeight / image.naturalWidth;
+        imageW = Math.min(imageW, imageBoxH / imageRatio);
+      } else {
+        imageW = Math.min(imageW, imageBoxH * 1.35);
+      }
+
+      drawCharacterImage(
+        character,
+        x + w / 2,
+        imageTop + imageBoxH / 2,
+        Math.max(18, imageW),
+        Math.sin(state.time * 2.4) * 0.06,
+        selected
+      );
+
       titleLines.forEach((line, index) => {
         fitMonoFont(line, nameMax, 6, w - 8);
         ctx.fillText(line, x + w / 2, titleStart + index * lineHeight);
