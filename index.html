@@ -1264,6 +1264,70 @@
       return state.gameMode === "easy";
     }
 
+    function isMobilePortraitDisplay() {
+      return state.displayWidth <= 820 && state.displayHeight > state.displayWidth;
+    }
+
+    function usesEasyMobileGameplayCamera() {
+      return usesFixedWorld()
+        && isMobilePortraitDisplay()
+        && (
+          state.phase === "ready"
+          || state.phase === "running"
+          || state.phase === "paused"
+          || (state.phase === "over" && state.gameOverTimer > 0)
+        );
+    }
+
+    function fixedWorldFitViewport(cssWidth, cssHeight) {
+      const fitScale = Math.min(cssWidth / EASY_WORLD_WIDTH, cssHeight / EASY_WORLD_HEIGHT);
+      const safeScale = Number.isFinite(fitScale) && fitScale > 0 ? fitScale : 1;
+      const viewportWidth = EASY_WORLD_WIDTH * safeScale;
+      const viewportHeight = EASY_WORLD_HEIGHT * safeScale;
+      return {
+        x: (cssWidth - viewportWidth) * 0.5,
+        y: (cssHeight - viewportHeight) * 0.5,
+        scale: safeScale,
+        width: viewportWidth,
+        height: viewportHeight
+      };
+    }
+
+    function fixedWorldMobileGameplayViewport(cssWidth, cssHeight) {
+      const coverScale = Math.max(cssWidth / EASY_WORLD_WIDTH, cssHeight / EASY_WORLD_HEIGHT);
+      const safeScale = Number.isFinite(coverScale) && coverScale > 0 ? coverScale : 1;
+      const viewportWidth = EASY_WORLD_WIDTH * safeScale;
+      const viewportHeight = EASY_WORLD_HEIGHT * safeScale;
+      const targetPlayerX = cssWidth * 0.26;
+      const targetPlayerY = cssHeight * 0.48;
+      const minX = cssWidth - viewportWidth;
+      const minY = cssHeight - viewportHeight;
+      return {
+        x: clamp(targetPlayerX - state.player.x * safeScale, Math.min(0, minX), 0),
+        y: clamp(targetPlayerY - state.player.y * safeScale, Math.min(0, minY), 0),
+        scale: safeScale,
+        width: viewportWidth,
+        height: viewportHeight
+      };
+    }
+
+    function syncFixedWorldViewport() {
+      if (!usesFixedWorld()) {
+        state.viewport = {
+          x: 0,
+          y: 0,
+          scale: 1,
+          width: state.displayWidth,
+          height: state.displayHeight
+        };
+        return;
+      }
+
+      state.viewport = usesEasyMobileGameplayCamera()
+        ? fixedWorldMobileGameplayViewport(state.displayWidth, state.displayHeight)
+        : fixedWorldFitViewport(state.displayWidth, state.displayHeight);
+    }
+
     function modeLabel() {
       return state.gameMode === "easy" ? "EASY MODE" : "HARD MODE";
     }
@@ -1285,19 +1349,9 @@
       state.displayHeight = cssHeight;
 
       if (usesFixedWorld()) {
-        const fitScale = Math.min(cssWidth / EASY_WORLD_WIDTH, cssHeight / EASY_WORLD_HEIGHT);
-        const safeScale = Number.isFinite(fitScale) && fitScale > 0 ? fitScale : 1;
-        const viewportWidth = EASY_WORLD_WIDTH * safeScale;
-        const viewportHeight = EASY_WORLD_HEIGHT * safeScale;
         state.width = EASY_WORLD_WIDTH;
         state.height = EASY_WORLD_HEIGHT;
-        state.viewport = {
-          x: (cssWidth - viewportWidth) * 0.5,
-          y: (cssHeight - viewportHeight) * 0.5,
-          scale: safeScale,
-          width: viewportWidth,
-          height: viewportHeight
-        };
+        syncFixedWorldViewport();
         return;
       }
 
@@ -2012,6 +2066,7 @@
     function draw() {
       const sx = state.shake ? rand(-state.shake, state.shake) : 0;
       const sy = state.shake ? rand(-state.shake, state.shake) : 0;
+      syncFixedWorldViewport();
       ctx.save();
       ctx.clearRect(0, 0, state.displayWidth, state.displayHeight);
       if (usesFixedWorld()) {
@@ -3082,6 +3137,7 @@
       const localX = event.clientX - rect.left;
       const localY = event.clientY - rect.top;
       if (usesFixedWorld()) {
+        syncFixedWorldViewport();
         return {
           x: (localX - state.viewport.x) / state.viewport.scale,
           y: (localY - state.viewport.y) / state.viewport.scale
