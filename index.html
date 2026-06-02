@@ -661,6 +661,11 @@
         display: none;
       }
 
+      body[data-phase="over"] .mobile-cabinet-hud,
+      body[data-phase="over"] .mobile-actions {
+        display: none;
+      }
+
       .sound-button {
         top: auto;
         right: max(12px, env(safe-area-inset-right));
@@ -1275,8 +1280,14 @@
           state.phase === "ready"
           || state.phase === "running"
           || state.phase === "paused"
-          || (state.phase === "over" && state.gameOverTimer > 0)
         );
+    }
+
+    function usesEasyMobileGameOverCamera() {
+      return usesFixedWorld()
+        && isMobilePortraitDisplay()
+        && state.phase === "over"
+        && state.gameOverTimer > 0;
     }
 
     function fixedWorldFitViewport(cssWidth, cssHeight) {
@@ -1311,6 +1322,20 @@
       };
     }
 
+    function fixedWorldMobileCenteredViewport(cssWidth, cssHeight) {
+      const coverScale = Math.max(cssWidth / EASY_WORLD_WIDTH, cssHeight / EASY_WORLD_HEIGHT);
+      const safeScale = Number.isFinite(coverScale) && coverScale > 0 ? coverScale : 1;
+      const viewportWidth = EASY_WORLD_WIDTH * safeScale;
+      const viewportHeight = EASY_WORLD_HEIGHT * safeScale;
+      return {
+        x: (cssWidth - viewportWidth) * 0.5,
+        y: (cssHeight - viewportHeight) * 0.5,
+        scale: safeScale,
+        width: viewportWidth,
+        height: viewportHeight
+      };
+    }
+
     function syncFixedWorldViewport() {
       if (!usesFixedWorld()) {
         state.viewport = {
@@ -1323,9 +1348,13 @@
         return;
       }
 
-      state.viewport = usesEasyMobileGameplayCamera()
-        ? fixedWorldMobileGameplayViewport(state.displayWidth, state.displayHeight)
-        : fixedWorldFitViewport(state.displayWidth, state.displayHeight);
+      if (usesEasyMobileGameOverCamera()) {
+        state.viewport = fixedWorldMobileCenteredViewport(state.displayWidth, state.displayHeight);
+      } else if (usesEasyMobileGameplayCamera()) {
+        state.viewport = fixedWorldMobileGameplayViewport(state.displayWidth, state.displayHeight);
+      } else {
+        state.viewport = fixedWorldFitViewport(state.displayWidth, state.displayHeight);
+      }
     }
 
     function modeLabel() {
@@ -1742,7 +1771,7 @@
       const margin = Math.max(70, state.height * 0.12);
       const gap = clamp(state.gap - state.score * 0.75, 178, 238);
       const center = rand(margin + gap * 0.5, state.height - margin - gap * 0.5);
-      const width = rand(74, 98);
+      const width = rand(62, 84);
       const sprites = randomObstacleSpritePair();
       state.obstacles.push({
         x,
@@ -2421,7 +2450,8 @@
       const hintY = state.height - 14;
       const pageControlY = hintY - 25;
       const boardButtonH = clamp(state.height * 0.046, 18, 24);
-      const boardControlY = pageCount > 1 ? pageControlY - boardButtonH - 8 : hintY - boardButtonH - 5;
+      const pageButtonH = pageCount > 1 ? clamp(state.height * 0.052, 17, 24) : 0;
+      const boardControlY = pageCount > 1 ? pageControlY - pageButtonH - boardButtonH - 10 : hintY - boardButtonH - 5;
       const gridTop = clamp(titleY + 34, 64, state.height * 0.31);
       const gridBottom = boardControlY - 8;
       const cardW = Math.max(44, (state.width - sidePad * 2 - gapX * (columns - 1)) / columns);
@@ -2446,7 +2476,7 @@
 
       if (pageCount > 1) {
         const buttonW = clamp(state.width * 0.095, 34, 48);
-        const buttonH = clamp(state.height * 0.052, 17, 24);
+        const buttonH = pageButtonH;
         const centerX = state.width / 2;
         const prevRect = { x: centerX - buttonW - 57, y: pageControlY - buttonH + 7, w: buttonW, h: buttonH, direction: -1 };
         const nextRect = { x: centerX + 57, y: pageControlY - buttonH + 7, w: buttonW, h: buttonH, direction: 1 };
@@ -2560,6 +2590,25 @@
       ctx.drawImage(image, drawX, drawY, drawW, drawH);
     }
 
+    function drawContainImage(image, x, y, width, height, padding = 0) {
+      const imageRatio = image.naturalWidth / image.naturalHeight;
+      const safeW = Math.max(1, width - padding * 2);
+      const safeH = Math.max(1, height - padding * 2);
+      const targetRatio = safeW / safeH;
+      let drawW = safeW;
+      let drawH = safeH;
+
+      if (targetRatio > imageRatio) {
+        drawW = safeH * imageRatio;
+      } else {
+        drawH = safeW / imageRatio;
+      }
+
+      const drawX = x + (width - drawW) * 0.5;
+      const drawY = y + (height - drawH) * 0.5;
+      ctx.drawImage(image, drawX, drawY, drawW, drawH);
+    }
+
     function drawRuinsLayer(baseY, alpha, color, pace) {
       ctx.save();
       ctx.globalAlpha = alpha;
@@ -2606,15 +2655,15 @@
 
       ctx.save();
       ctx.beginPath();
-      ctx.rect(x - 12, y, w + 24, h);
+      ctx.rect(x - 8, y, w + 16, h);
       ctx.clip();
 
-      const drawW = w + 20;
+      const drawW = w + 12;
       const naturalSegmentH = drawW * (sprite.naturalHeight / sprite.naturalWidth);
       const segmentH = clamp(naturalSegmentH, 96, Math.max(108, state.height * 0.34));
       const overlap = Math.max(18, segmentH * 0.24);
       const step = Math.max(34, segmentH - overlap);
-      const drawX = x - 10 + (obstacleSpriteOffsets[spriteIndex] || 0);
+      const drawX = x - 6 + (obstacleSpriteOffsets[spriteIndex] || 0);
       if (top) {
         for (let yy = y + h - segmentH; yy > y - segmentH - step; yy -= step) {
           drawObstacleSprite(sprite, drawX, yy, drawW, segmentH);
@@ -2960,7 +3009,9 @@
     function drawGameOverScreen() {
       ctx.save();
       if (gameOverImage.complete && gameOverImage.naturalWidth) {
-        drawCoverImage(gameOverImage, 0, 0, state.width, state.height);
+        ctx.fillStyle = "#050505";
+        ctx.fillRect(0, 0, state.width, state.height);
+        drawContainImage(gameOverImage, 0, 0, state.width, state.height, clamp(Math.min(state.width, state.height) * 0.035, 8, 28));
       } else {
         ctx.fillStyle = "#050505";
         ctx.fillRect(0, 0, state.width, state.height);
@@ -2969,24 +3020,38 @@
       ctx.fillStyle = "rgba(0, 0, 0, 0.36)";
       ctx.fillRect(0, 0, state.width, state.height);
 
+      const visibleGameOver = usesEasyMobileGameOverCamera()
+        ? {
+          x: -state.viewport.x / state.viewport.scale,
+          y: -state.viewport.y / state.viewport.scale,
+          w: state.displayWidth / state.viewport.scale,
+          h: state.displayHeight / state.viewport.scale
+        }
+        : { x: 0, y: 0, w: state.width, h: state.height };
+      const titleX = visibleGameOver.x + visibleGameOver.w * 0.5;
+      const titleY = visibleGameOver.y + visibleGameOver.h * 0.5;
+      const titleMaxW = Math.max(120, visibleGameOver.w - 28);
+
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      fitMonoFont("GAME OVER", 82, 42, state.width - 52);
-      ctx.lineWidth = 8;
+      const gameOverMaxPx = clamp(Math.min(titleMaxW * 0.2, visibleGameOver.h * 0.17), 28, 82);
+      fitMonoFont("GAME OVER", gameOverMaxPx, 20, titleMaxW);
+      ctx.lineWidth = clamp(gameOverMaxPx * 0.1, 4, 8);
       ctx.strokeStyle = "rgba(0, 0, 0, 0.82)";
-      ctx.strokeText("GAME OVER", state.width / 2, state.height * 0.5);
+      ctx.strokeText("GAME OVER", titleX, titleY);
       ctx.fillStyle = "#ff1d1d";
       ctx.shadowColor = "rgba(255, 0, 0, 0.8)";
       ctx.shadowBlur = 18;
-      ctx.fillText("GAME OVER", state.width / 2, state.height * 0.5);
+      ctx.fillText("GAME OVER", titleX, titleY);
       ctx.restore();
     }
 
     function drawLeaderboardPanel(options = {}) {
       const viewer = Boolean(options.viewer);
       const board = state.leaderboard;
-      const boxW = clamp(state.width * 0.78, 300, 610);
-      const boxH = clamp(state.height * 0.74, 258, 390);
+      const safePanelMargin = clamp(Math.min(state.width, state.height) * 0.035, 10, 24);
+      const boxW = Math.min(clamp(state.width * 0.78, 280, 610), state.width - safePanelMargin * 2);
+      const boxH = Math.min(clamp(state.height * 0.74, 248, 390), state.height - safePanelMargin * 2);
       const x = (state.width - boxW) / 2;
       const y = (state.height - boxH) / 2;
       const pad = clamp(boxW * 0.055, 14, 24);
