@@ -929,7 +929,7 @@
       { id: "mm777", name: "MM777", readyName: "MM777", titleLines: ["MM777"], image: mm777Sprite, spriteW: 84, radius: 19 },
       { id: "rocco", name: "Rocco", readyName: "Rocco", titleLines: ["ROCCO"], image: roccoSprite, spriteW: 92, radius: 20 },
       { id: "pettywiselol", name: "PettyWiselol", readyName: "PettyWiselol", titleLines: ["PETTY", "WISELOL"], image: pettywiselolSprite, spriteW: 92, radius: 20 },
-      { id: "youyosong", name: "YouYosong", readyName: "YouYosong", titleLines: ["YOUYO", "SONG"], image: youyosongSprite, spriteW: 96, radius: 20 }
+      { id: "youyosong", name: "YouYosong", readyName: "YouYosong", titleLines: ["YOUYO", "SONG"], image: youyosongSprite, spriteW: 132, gameplayMaxW: 132, radius: 20 }
     ];
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyDYpSDz5PTYPcgchueaUVifIygwpoJFOTM",
@@ -2749,7 +2749,7 @@
 
     function gameplaySpriteWidth(character) {
       const image = character.image;
-      const baseW = Math.min(character.spriteW, GAMEPLAY_SPRITE_MAX_W);
+      const baseW = Math.min(character.spriteW, character.gameplayMaxW || GAMEPLAY_SPRITE_MAX_W);
       if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
         return baseW;
       }
