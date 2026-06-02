@@ -1266,7 +1266,12 @@
     }
 
     function usesFixedWorld() {
-      return state.gameMode === "easy";
+      return state.gameMode === "easy" && (
+        state.phase === "ready"
+        || state.phase === "running"
+        || state.phase === "paused"
+        || state.phase === "over"
+      );
     }
 
     function isMobilePortraitDisplay() {
@@ -1585,6 +1590,8 @@
       resetSelectTapTracker();
       state.selectedCharacter = clamp(index, 0, characters.length - 1);
       state.characterPage = pageForCharacter(state.selectedCharacter);
+      state.phase = "ready";
+      resizeCanvas();
       clearRun();
       state.phase = "ready";
       playTone("select");
@@ -1600,6 +1607,8 @@
 
     function showModeSelect() {
       resetSelectTapTracker();
+      state.phase = "mode";
+      resizeCanvas();
       clearRun();
       state.phase = "mode";
       state.modeFocus = state.gameMode;
@@ -1609,6 +1618,8 @@
 
     function showCharacterSelect() {
       resetSelectTapTracker();
+      state.phase = "select";
+      resizeCanvas();
       state.characterPage = pageForCharacter(state.selectedCharacter);
       clearRun();
       state.phase = "select";
@@ -1619,6 +1630,7 @@
     function showScoreboardViewer() {
       resetSelectTapTracker();
       state.phase = "scoreboard";
+      resizeCanvas();
       state.leaderboard.status = "Loading daily top 5...";
       state.leaderboard.inputRect = null;
       state.leaderboard.submitRect = null;
