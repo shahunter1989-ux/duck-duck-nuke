@@ -527,6 +527,44 @@
       touch-action: manipulation;
     }
 
+    .desktop-home-button {
+      position: fixed;
+      right: max(12px, env(safe-area-inset-right));
+      top: calc(max(12px, env(safe-area-inset-top)) + 50px);
+      z-index: 6;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(156, 255, 109, 0.42);
+      border-radius: 6px;
+      background: rgba(5, 12, 6, 0.28);
+      color: rgba(156, 255, 109, 0.72);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      opacity: 0;
+      pointer-events: none;
+      text-shadow: 0 0 8px rgba(156, 255, 109, 0.45);
+      touch-action: manipulation;
+      transition: opacity 140ms ease, background 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+
+    .desktop-home-button:hover,
+    .desktop-home-button:focus-visible {
+      background: rgba(5, 12, 6, 0.62);
+      border-color: rgba(156, 255, 109, 0.86);
+      color: #d9ffd0;
+      outline: none;
+      opacity: 0.92;
+    }
+
+    body[data-phase="ready"] .desktop-home-button,
+    body[data-phase="running"] .desktop-home-button,
+    body[data-phase="paused"] .desktop-home-button,
+    body[data-phase="over"][data-game-over-ready="true"] .desktop-home-button {
+      opacity: 0.46;
+      pointer-events: auto;
+    }
+
     .pip-nav {
       position: absolute;
       left: 84%;
@@ -635,12 +673,17 @@
         background: rgba(15, 13, 10, 0.92);
         font-size: clamp(9px, 2.6vw, 12px);
       }
+
+      .desktop-home-button {
+        display: none !important;
+      }
     }
 
     @media (max-width: 1024px) and (orientation: landscape) {
       .mobile-cabinet-hud,
       .mobile-actions,
       .pip-nav,
+      .desktop-home-button,
       .sound-button {
         display: none !important;
       }
@@ -772,6 +815,7 @@
     </div>
 
     <button id="soundButton" class="sound-button" type="button" aria-pressed="true">Sound On</button>
+    <button id="desktopHomeButton" class="desktop-home-button" type="button">Home</button>
   </main>
 
   <div class="rotate-device-overlay" role="status" aria-live="polite">
@@ -802,6 +846,7 @@
     const mobileCapsText = document.querySelector("#mobileCapsText");
     const mobileDistanceText = document.querySelector("#mobileDistanceText");
     const soundButton = document.querySelector("#soundButton");
+    const desktopHomeButton = document.querySelector("#desktopHomeButton");
     const statControl = document.querySelector("#statControl");
     const dataControl = document.querySelector("#dataControl");
     const radioControl = document.querySelector("#radioControl");
@@ -1930,6 +1975,10 @@
       }[state.phase];
 
       document.body.dataset.phase = state.phase;
+      document.body.dataset.gameOverReady = String(state.phase === "over" && state.gameOverTimer <= 0);
+      const showDesktopHome = state.phase === "ready" || state.phase === "running" || state.phase === "paused" || (state.phase === "over" && state.gameOverTimer <= 0);
+      desktopHomeButton.hidden = !showDesktopHome;
+      desktopHomeButton.setAttribute("aria-hidden", String(!showDesktopHome));
       modeText.textContent = state.phase === "mode" || state.phase === "select" || state.phase === "ready" || state.phase === "running"
         ? `${phaseLabel} / ${modeDisplayName(state.gameMode)}`
         : phaseLabel;
@@ -3316,6 +3365,7 @@
     startButton.addEventListener("click", (event) => useControl(event, resetGame));
     pauseButton.addEventListener("click", (event) => useControl(event, togglePause));
     soundButton.addEventListener("click", (event) => useControl(event, toggleSound));
+    desktopHomeButton.addEventListener("click", (event) => useControl(event, homeControl));
     statControl.addEventListener("click", (event) => useControl(event, statControlAction));
     dataControl.addEventListener("click", (event) => useControl(event, togglePause));
     radioControl.addEventListener("click", (event) => useControl(event, radioControlAction));
