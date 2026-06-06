@@ -883,6 +883,8 @@
     coconutSprite.src = "assets/coconut.png";
     const bigndn1988Sprite = new Image();
     bigndn1988Sprite.src = "assets/bigndn1988.png";
+    const sharkbite07Sprite = new Image();
+    sharkbite07Sprite.src = "assets/sharkbite-07.png";
     const backgroundSpritePaths = [
       "assets/wulfzx-underground-background.png",
       "assets/wulfzx-vault-day-background.png",
@@ -940,7 +942,22 @@
       { id: "pettywiselol", name: "PettyWiselol", readyName: "PettyWiselol", titleLines: ["PETTY", "WISELOL"], image: pettywiselolSprite, spriteW: 92, radius: 20 },
       { id: "youyosong", name: "YouYosong", readyName: "YouYosong", titleLines: ["YOUYO", "SONG"], image: youyosongSprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
       { id: "coconut", name: "Coconut", readyName: "Coconut", titleLines: ["COCONUT"], image: coconutSprite, spriteW: 118, gameplayMaxW: 118, radius: 20 },
-      { id: "bigndn1988", name: "BIGndn1988", readyName: "BIGndn1988", titleLines: ["BIGNDN", "1988"], image: bigndn1988Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 }
+      { id: "bigndn1988", name: "BIGndn1988", readyName: "BIGndn1988", titleLines: ["BIGNDN", "1988"], image: bigndn1988Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
+      { id: "sharkbite07", name: "Sharkbite 07", readyName: "Sharkbite 07", titleLines: ["SHARKBITE", "07"], image: sharkbite07Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 }
+    ];
+    const characterRosters = [
+      {
+        id: "nukeCrew",
+        name: "Nuke Crew",
+        title: "NUKE CREW",
+        characterIds: characters.filter((character) => character.id !== "sharkbite07").map((character) => character.id)
+      },
+      {
+        id: "rocketSquad",
+        name: "Rocket Squad",
+        title: "ROCKET SQUAD",
+        characterIds: ["sharkbite07"]
+      }
     ];
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyDYpSDz5PTYPcgchueaUVifIygwpoJFOTM",
@@ -1002,9 +1019,11 @@
       particles: [],
       stars: [],
       selectedCharacter: 0,
+      rosterIndex: 0,
       characterPage: 0,
       selectionRects: [],
       pageButtonRects: [],
+      rosterTabRects: [],
       scoreboardButtonRect: null,
       changeModeButtonRect: null,
       modeButtonRects: [],
@@ -1038,21 +1057,40 @@
     };
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-    function characterPageCount() {
-      return Math.max(1, Math.ceil(characters.length / CHARACTERS_PER_PAGE));
+    function rosterCharacterIndices(rosterIndex = state.rosterIndex) {
+      const roster = characterRosters[clamp(rosterIndex, 0, characterRosters.length - 1)] || characterRosters[0];
+      return roster.characterIds
+        .map((id) => characters.findIndex((character) => character.id === id))
+        .filter((index) => index >= 0);
     }
 
-    function pageForCharacter(index) {
-      return Math.floor(clamp(index, 0, characters.length - 1) / CHARACTERS_PER_PAGE);
+    function characterPageCount(rosterIndex = state.rosterIndex) {
+      return Math.max(1, Math.ceil(rosterCharacterIndices(rosterIndex).length / CHARACTERS_PER_PAGE));
     }
 
-    function visibleCharacterRange(page = state.characterPage) {
-      const pageIndex = clamp(page, 0, characterPageCount() - 1);
+    function rosterForCharacter(index) {
+      const safeIndex = clamp(index, 0, characters.length - 1);
+      const characterId = characters[safeIndex].id;
+      const rosterIndex = characterRosters.findIndex((roster) => roster.characterIds.includes(characterId));
+      return rosterIndex >= 0 ? rosterIndex : 0;
+    }
+
+    function pageForCharacter(index, rosterIndex = rosterForCharacter(index)) {
+      const safeIndex = clamp(index, 0, characters.length - 1);
+      const rosterIndices = rosterCharacterIndices(rosterIndex);
+      const rosterPosition = Math.max(0, rosterIndices.indexOf(safeIndex));
+      return Math.floor(rosterPosition / CHARACTERS_PER_PAGE);
+    }
+
+    function visibleCharacterRange(page = state.characterPage, rosterIndex = state.rosterIndex) {
+      const rosterIndices = rosterCharacterIndices(rosterIndex);
+      const pageIndex = clamp(page, 0, characterPageCount(rosterIndex) - 1);
       const start = pageIndex * CHARACTERS_PER_PAGE;
       return {
         page: pageIndex,
         start,
-        end: Math.min(characters.length, start + CHARACTERS_PER_PAGE)
+        end: Math.min(rosterIndices.length, start + CHARACTERS_PER_PAGE),
+        indices: rosterIndices
       };
     }
 
@@ -1064,11 +1102,24 @@
     function showCharacterPage(page, focusVisibleCharacter = true) {
       const range = visibleCharacterRange(page);
       state.characterPage = range.page;
+      const visibleIndices = range.indices.slice(range.start, range.end);
       if (
         focusVisibleCharacter &&
-        (state.selectedCharacter < range.start || state.selectedCharacter >= range.end)
+        visibleIndices.length &&
+        !visibleIndices.includes(state.selectedCharacter)
       ) {
-        state.selectedCharacter = range.start;
+        state.selectedCharacter = visibleIndices[0];
+      }
+      resetSelectTapTracker();
+      updateHud();
+    }
+
+    function showCharacterRoster(rosterIndex) {
+      state.rosterIndex = clamp(rosterIndex, 0, characterRosters.length - 1);
+      state.characterPage = 0;
+      const rosterIndices = rosterCharacterIndices();
+      if (rosterIndices.length && !rosterIndices.includes(state.selectedCharacter)) {
+        state.selectedCharacter = rosterIndices[0];
       }
       resetSelectTapTracker();
       updateHud();
@@ -1379,6 +1430,7 @@
     function resetInputRects() {
       state.selectionRects = [];
       state.pageButtonRects = [];
+      state.rosterTabRects = [];
       state.scoreboardButtonRect = null;
       state.changeModeButtonRect = null;
       state.modeButtonRects = [];
@@ -1595,7 +1647,8 @@
     function chooseCharacter(index) {
       resetSelectTapTracker();
       state.selectedCharacter = clamp(index, 0, characters.length - 1);
-      state.characterPage = pageForCharacter(state.selectedCharacter);
+      state.rosterIndex = rosterForCharacter(state.selectedCharacter);
+      state.characterPage = pageForCharacter(state.selectedCharacter, state.rosterIndex);
       state.phase = "ready";
       resizeCanvas();
       clearRun();
@@ -1626,7 +1679,8 @@
       resetSelectTapTracker();
       state.phase = "select";
       resizeCanvas();
-      state.characterPage = pageForCharacter(state.selectedCharacter);
+      state.rosterIndex = rosterForCharacter(state.selectedCharacter);
+      state.characterPage = pageForCharacter(state.selectedCharacter, state.rosterIndex);
       clearRun();
       state.phase = "select";
       playTone("select");
@@ -2455,10 +2509,35 @@
       fitMonoFont(modeLabel(), 14, 9, state.width - 60);
       ctx.fillText(modeLabel(), state.width / 2, titleY + 17);
 
+      const rosterTabH = clamp(state.height * 0.043, 18, 24);
+      const rosterTabGap = clamp(state.width * 0.016, 6, 10);
+      const rosterTabW = clamp(state.width * 0.2, 94, 142);
+      const rosterTabsW = rosterTabW * characterRosters.length + rosterTabGap * (characterRosters.length - 1);
+      const rosterTabY = titleY + 25;
+      state.rosterTabRects = characterRosters.map((roster, rosterIndex) => {
+        const rect = {
+          x: (state.width - rosterTabsW) / 2 + rosterIndex * (rosterTabW + rosterTabGap),
+          y: rosterTabY,
+          w: rosterTabW,
+          h: rosterTabH,
+          rosterIndex
+        };
+        const active = rosterIndex === state.rosterIndex;
+        ctx.fillStyle = active ? "rgba(156, 255, 109, 0.17)" : "rgba(5, 12, 6, 0.74)";
+        ctx.strokeStyle = active ? "rgba(156, 255, 109, 0.82)" : "rgba(156, 255, 109, 0.36)";
+        ctx.lineWidth = active ? 2 : 1.5;
+        roundRect(rect.x, rect.y, rect.w, rect.h, 5, true, true);
+        ctx.fillStyle = active ? "#9cff6d" : "rgba(217, 255, 208, 0.72)";
+        fitMonoFont(roster.title, 12, 7, rect.w - 10);
+        ctx.fillText(roster.title, rect.x + rect.w / 2, rect.y + rect.h - 6);
+        return rect;
+      });
+
       const pageCount = characterPageCount();
       const range = visibleCharacterRange();
       state.characterPage = range.page;
-      const visibleCharacters = characters.slice(range.start, range.end);
+      const visibleIndices = range.indices.slice(range.start, range.end);
+      const visibleCharacters = visibleIndices.map((index) => characters[index]);
       const count = visibleCharacters.length;
       const mobileSparsePage = isMobileCabinet() && pageCount > 1 && count > 0 && count < 4;
       const columns = Math.max(1, pageCount > 1 ? (mobileSparsePage ? count : 4) : count <= 4 ? count : 4);
@@ -2471,16 +2550,17 @@
       const boardButtonH = clamp(state.height * 0.046, 18, 24);
       const pageButtonH = pageCount > 1 ? clamp(state.height * 0.052, 17, 24) : 0;
       const boardControlY = pageCount > 1 ? pageControlY - pageButtonH - boardButtonH - 10 : hintY - boardButtonH - 5;
-      const gridTop = clamp(titleY + 34, 64, state.height * 0.31);
+      const gridTop = clamp(rosterTabY + rosterTabH + 10, 78, state.height * 0.34);
       const gridBottom = boardControlY - 8;
-      const cardW = Math.max(44, (state.width - sidePad * 2 - gapX * (columns - 1)) / columns);
+      const rawCardW = Math.max(44, (state.width - sidePad * 2 - gapX * (columns - 1)) / columns);
+      const cardW = count === 1 ? Math.min(rawCardW, clamp(state.width * 0.36, 170, 260)) : rawCardW;
       const cardH = clamp((gridBottom - gridTop - gapY * (rows - 1)) / rows, 62, 118);
       const totalW = cardW * columns + gapX * (columns - 1);
       const totalH = cardH * rows + gapY * (rows - 1);
       const startX = (state.width - totalW) / 2;
       const startY = gridTop + Math.max(0, (gridBottom - gridTop - totalH) / 2);
       state.selectionRects = visibleCharacters.map((character, visibleIndex) => {
-        const index = range.start + visibleIndex;
+        const index = visibleIndices[visibleIndex];
         const col = visibleIndex % columns;
         const row = Math.floor(visibleIndex / columns);
         const x = startX + col * (cardW + gapX);
@@ -3297,6 +3377,13 @@
     }
 
     function handleSelectPointer(point, now = performance.now()) {
+      const rosterHit = state.rosterTabRects.find((rect) => pointInRect(point, rect));
+      if (rosterHit) {
+        showCharacterRoster(rosterHit.rosterIndex);
+        playTone("select");
+        return;
+      }
+
       if (pointInRect(point, state.changeModeButtonRect)) {
         showModeSelect();
         return;
@@ -3431,9 +3518,17 @@
       if (state.phase !== "select") {
         return;
       }
-      const next = (state.selectedCharacter + direction + characters.length) % characters.length;
+      const rosterIndices = rosterCharacterIndices();
+      if (!rosterIndices.length) {
+        return;
+      }
+      const currentPosition = rosterIndices.indexOf(state.selectedCharacter);
+      const nextPosition = currentPosition >= 0
+        ? (currentPosition + direction + rosterIndices.length) % rosterIndices.length
+        : 0;
+      const next = rosterIndices[nextPosition];
       state.selectedCharacter = next;
-      state.characterPage = pageForCharacter(next);
+      state.characterPage = pageForCharacter(next, state.rosterIndex);
       resetSelectTapTracker();
       playTone("select");
       updateHud();
