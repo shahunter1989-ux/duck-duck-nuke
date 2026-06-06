@@ -1348,8 +1348,7 @@
     function usesEasyMobileGameOverCamera() {
       return usesFixedWorld()
         && isMobilePortraitDisplay()
-        && state.phase === "over"
-        && state.gameOverTimer > 0;
+        && state.phase === "over";
     }
 
     function fixedWorldFitViewport(cssWidth, cssHeight) {
@@ -1843,7 +1842,7 @@
       const margin = Math.max(70, state.height * 0.12);
       const gap = clamp(state.gap - state.score * 0.75, 178, 238);
       const center = rand(margin + gap * 0.5, state.height - margin - gap * 0.5);
-      const width = rand(62, 84);
+      const width = rand(62, 84) * (state.gameMode === "easy" ? 0.9 : 1);
       const sprites = randomObstacleSpritePair();
       state.obstacles.push({
         x,
@@ -2088,14 +2087,17 @@
     function hitsObstacle(player, obstacle) {
       const hitInsetX = 18;
       const hitInsetY = 16;
-      const hitW = Math.max(12, obstacle.width - hitInsetX * 2);
+      const rawHitW = Math.max(12, obstacle.width - hitInsetX * 2);
+      const hitboxScale = state.gameMode === "easy" ? 0.85 : 1;
+      const hitW = Math.max(10, rawHitW * hitboxScale);
+      const hitX = obstacle.x + hitInsetX + (rawHitW - hitW) / 2;
       const hitR = player.radius * 0.72;
 
       return circleRect(
         player.x,
         player.y,
         hitR,
-        obstacle.x + hitInsetX,
+        hitX,
         -40,
         hitW,
         Math.max(0, obstacle.gapTop + 40 - hitInsetY)
@@ -2103,7 +2105,7 @@
         player.x,
         player.y,
         hitR,
-        obstacle.x + hitInsetX,
+        hitX,
         obstacle.gapBottom + hitInsetY,
         hitW,
         Math.max(0, state.height - obstacle.gapBottom - hitInsetY)
@@ -3172,11 +3174,20 @@
     function drawLeaderboardPanel(options = {}) {
       const viewer = Boolean(options.viewer);
       const board = state.leaderboard;
-      const safePanelMargin = clamp(Math.min(state.width, state.height) * 0.035, 10, 24);
-      const boxW = Math.min(clamp(state.width * 0.78, 280, 610), state.width - safePanelMargin * 2);
-      const boxH = Math.min(clamp(state.height * 0.74, 248, 390), state.height - safePanelMargin * 2);
-      const x = (state.width - boxW) / 2;
-      const y = (state.height - boxH) / 2;
+      const panelBounds = !viewer && usesEasyMobileGameOverCamera()
+        ? {
+          x: -state.viewport.x / state.viewport.scale,
+          y: -state.viewport.y / state.viewport.scale,
+          w: state.displayWidth / state.viewport.scale,
+          h: state.displayHeight / state.viewport.scale
+        }
+        : { x: 0, y: 0, w: state.width, h: state.height };
+      const panelCenterX = panelBounds.x + panelBounds.w * 0.5;
+      const safePanelMargin = clamp(Math.min(panelBounds.w, panelBounds.h) * 0.035, 10, 24);
+      const boxW = Math.min(clamp(panelBounds.w * 0.78, 280, 610), panelBounds.w - safePanelMargin * 2);
+      const boxH = Math.min(clamp(panelBounds.h * 0.74, 248, 390), panelBounds.h - safePanelMargin * 2);
+      const x = panelBounds.x + (panelBounds.w - boxW) / 2;
+      const y = panelBounds.y + (panelBounds.h - boxH) / 2;
       const pad = clamp(boxW * 0.055, 14, 24);
       const buttonH = clamp(boxH * 0.105, 30, 40);
       const inputH = buttonH;
@@ -3195,7 +3206,7 @@
       board.inputRect = viewer ? null : { x: inputX, y: controlsY, w: inputW, h: inputH };
       board.submitRect = viewer || board.submitted ? null : { x: submitX, y: controlsY, w: buttonW, h: buttonH };
       board.restartRect = viewer ? null : { x: restartX, y: controlsY, w: buttonW, h: buttonH };
-      board.backRect = viewer ? { x: state.width / 2 - buttonW / 2, y: controlsY, w: buttonW, h: buttonH } : null;
+      board.backRect = viewer ? { x: panelCenterX - buttonW / 2, y: controlsY, w: buttonW, h: buttonH } : null;
 
       ctx.save();
       ctx.fillStyle = "rgba(5, 12, 6, 0.95)";
@@ -3207,16 +3218,16 @@
       ctx.fillStyle = "#9cff6d";
       const title = viewer ? "LIVE TOP 5" : "DAILY TOP 5";
       fitMonoFont(title, 28, 18, boxW - pad * 2);
-      ctx.fillText(title, state.width / 2, y + pad + 24);
+      ctx.fillText(title, panelCenterX, y + pad + 24);
       ctx.fillStyle = "rgba(217, 255, 208, 0.76)";
       const boardDateLabel = displayBoardDate(board.dateKey || todayBoardKey());
       const dateLine = viewer ? `UTC ${boardDateLabel}` : `UTC ${boardDateLabel}   SCORE ${state.score}`;
       fitMonoFont(dateLine, 14, 9, boxW - pad * 2);
-      ctx.fillText(dateLine, state.width / 2, y + pad + 48);
+      ctx.fillText(dateLine, panelCenterX, y + pad + 48);
       ctx.fillStyle = "#ffc857";
       const resetText = `RESETS IN ${leaderboardResetCountdown()}`;
       fitMonoFont(resetText, 16, 9, boxW - pad * 2);
-      ctx.fillText(resetText, state.width / 2, y + pad + 70);
+      ctx.fillText(resetText, panelCenterX, y + pad + 70);
 
       ctx.textAlign = "left";
       const entries = board.loading ? [] : board.entries;
@@ -3238,7 +3249,7 @@
       ctx.fillStyle = status.includes("Firebase") || status.includes("unavailable") || status.includes("failed") ? "#ffc857" : "rgba(217, 255, 208, 0.78)";
       ctx.textAlign = "center";
       fitMonoFont(status, 12, 8, boxW - pad * 2);
-      ctx.fillText(status, state.width / 2, statusY);
+      ctx.fillText(status, panelCenterX, statusY);
 
       ctx.textAlign = "center";
       if (viewer) {
