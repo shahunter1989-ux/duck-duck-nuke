@@ -2509,31 +2509,40 @@
       fitMonoFont(modeLabel(), 14, 9, state.width - 60);
       ctx.fillText(modeLabel(), state.width / 2, titleY + 17);
 
+      const mobileSelectLayout = isMobileCabinet();
+      const pageCount = characterPageCount();
+      const hintY = state.height - 14;
+      const pageControlY = hintY - 25;
+      const boardButtonH = clamp(state.height * 0.046, 18, 24);
+      const pageButtonH = pageCount > 1 ? clamp(state.height * 0.052, 17, 24) : 0;
+      const reservedPageButtonH = mobileSelectLayout ? clamp(state.height * 0.052, 17, 24) : pageButtonH;
+      const boardControlY = mobileSelectLayout || pageCount > 1 ? pageControlY - reservedPageButtonH - boardButtonH - 10 : hintY - boardButtonH - 5;
       const rosterTabH = clamp(state.height * 0.043, 18, 24);
       const rosterTabGap = clamp(state.width * 0.016, 6, 10);
       const rosterTabW = clamp(state.width * 0.2, 94, 142);
       const rosterTabsW = rosterTabW * characterRosters.length + rosterTabGap * (characterRosters.length - 1);
-      const rosterTabY = titleY + 25;
-      state.rosterTabRects = characterRosters.map((roster, rosterIndex) => {
-        const rect = {
-          x: (state.width - rosterTabsW) / 2 + rosterIndex * (rosterTabW + rosterTabGap),
-          y: rosterTabY,
-          w: rosterTabW,
-          h: rosterTabH,
-          rosterIndex
-        };
-        const active = rosterIndex === state.rosterIndex;
-        ctx.fillStyle = active ? "rgba(156, 255, 109, 0.17)" : "rgba(5, 12, 6, 0.74)";
-        ctx.strokeStyle = active ? "rgba(156, 255, 109, 0.82)" : "rgba(156, 255, 109, 0.36)";
-        ctx.lineWidth = active ? 2 : 1.5;
-        roundRect(rect.x, rect.y, rect.w, rect.h, 5, true, true);
-        ctx.fillStyle = active ? "#9cff6d" : "rgba(217, 255, 208, 0.72)";
-        fitMonoFont(roster.title, 12, 7, rect.w - 10);
-        ctx.fillText(roster.title, rect.x + rect.w / 2, rect.y + rect.h - 6);
-        return rect;
-      });
+      const rosterTabY = mobileSelectLayout ? boardControlY - rosterTabH - 8 : titleY + 25;
+      const drawRosterTabs = () => {
+        state.rosterTabRects = characterRosters.map((roster, rosterIndex) => {
+          const rect = {
+            x: (state.width - rosterTabsW) / 2 + rosterIndex * (rosterTabW + rosterTabGap),
+            y: rosterTabY,
+            w: rosterTabW,
+            h: rosterTabH,
+            rosterIndex
+          };
+          const active = rosterIndex === state.rosterIndex;
+          ctx.fillStyle = active ? "rgba(156, 255, 109, 0.17)" : "rgba(5, 12, 6, 0.74)";
+          ctx.strokeStyle = active ? "rgba(156, 255, 109, 0.82)" : "rgba(156, 255, 109, 0.36)";
+          ctx.lineWidth = active ? 2 : 1.5;
+          roundRect(rect.x, rect.y, rect.w, rect.h, 5, true, true);
+          ctx.fillStyle = active ? "#9cff6d" : "rgba(217, 255, 208, 0.72)";
+          fitMonoFont(roster.title, 12, 7, rect.w - 10);
+          ctx.fillText(roster.title, rect.x + rect.w / 2, rect.y + rect.h - 6);
+          return rect;
+        });
+      };
 
-      const pageCount = characterPageCount();
       const range = visibleCharacterRange();
       state.characterPage = range.page;
       const visibleIndices = range.indices.slice(range.start, range.end);
@@ -2545,13 +2554,8 @@
       const sidePad = clamp(state.width * 0.035, 10, 18);
       const gapX = clamp(state.width * 0.018, 5, 10);
       const gapY = clamp(state.height * 0.025, 5, 9);
-      const hintY = state.height - 14;
-      const pageControlY = hintY - 25;
-      const boardButtonH = clamp(state.height * 0.046, 18, 24);
-      const pageButtonH = pageCount > 1 ? clamp(state.height * 0.052, 17, 24) : 0;
-      const boardControlY = pageCount > 1 ? pageControlY - pageButtonH - boardButtonH - 10 : hintY - boardButtonH - 5;
-      const gridTop = clamp(rosterTabY + rosterTabH + 10, 78, state.height * 0.34);
-      const gridBottom = boardControlY - 8;
+      const gridTop = mobileSelectLayout ? clamp(titleY + 34, 78, state.height * 0.3) : clamp(rosterTabY + rosterTabH + 10, 78, state.height * 0.34);
+      const gridBottom = mobileSelectLayout ? rosterTabY - 8 : boardControlY - 8;
       const rawCardW = Math.max(44, (state.width - sidePad * 2 - gapX * (columns - 1)) / columns);
       const cardW = count === 1 ? Math.min(rawCardW, clamp(state.width * 0.36, 170, 260)) : rawCardW;
       const cardH = clamp((gridBottom - gridTop - gapY * (rows - 1)) / rows, 62, 118);
@@ -2572,6 +2576,7 @@
       state.pageButtonRects = [];
       state.scoreboardButtonRect = null;
       state.changeModeButtonRect = null;
+      drawRosterTabs();
 
       if (pageCount > 1) {
         const buttonW = clamp(state.width * 0.095, 34, 48);
