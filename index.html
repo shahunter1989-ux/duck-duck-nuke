@@ -266,7 +266,7 @@
       }
     }
 
-    @media (max-width: 820px), (max-height: 520px), (hover: none) and (pointer: coarse) {
+    @media (max-width: 820px), (max-height: 520px) {
       body {
         height: 100vh;
         height: 100dvh;
@@ -467,6 +467,13 @@
         text-shadow: 0 0 8px rgba(255, 200, 87, 0.35);
       }
 
+      .mobile-charge-meta:has(#mobileCapsText[hidden]) {
+        bottom: 10%;
+        color: #b7ff81;
+        font-size: clamp(12px, 3.2vw, 17px);
+        line-height: 1;
+      }
+
       .mobile-actions {
         position: absolute;
         left: max(10px, env(safe-area-inset-left));
@@ -608,7 +615,7 @@
       background: rgba(156, 255, 109, 0.12);
     }
 
-    @media (max-width: 820px), (max-height: 520px), (hover: none) and (pointer: coarse) {
+    @media (max-width: 820px), (max-height: 520px) {
       .pip-nav {
         left: auto;
         right: 2.8%;
@@ -975,6 +982,8 @@
     const CAP_MILESTONE = 3;
     const CAP_MILESTONE_CHARGE = 0.25;
     const CAP_FIXED_RECHARGE_CHANCE = 0.25;
+    const DISTANCE_SCORE_UNIT = 100;
+    const CAP_SCORE_VALUE = 2;
     const CHARACTERS_PER_PAGE = 8;
     const SELECT_DOUBLE_ACTIVATE_MS = 500;
     const SELECT_SWIPE_MIN_PX = 45;
@@ -1011,12 +1020,14 @@
       score: 0,
       distance: 0,
       capsCollected: 0,
+      obstaclePasses: 0,
       best: Number(localStorage.getItem("pipBoyJetpackBest") || 0),
       speed: 224,
       gap: 184,
       obstacles: [],
       caps: [],
       particles: [],
+      floatingTexts: [],
       stars: [],
       selectedCharacter: 0,
       rosterIndex: 0,
@@ -1129,6 +1140,11 @@
     const rollCapRecharge = () => (
       Math.random() < CAP_FIXED_RECHARGE_CHANCE ? CAP_MILESTONE_CHARGE : Math.random()
     );
+    const distanceScore = () => Math.floor(state.distance / DISTANCE_SCORE_UNIT);
+    const capScore = () => state.capsCollected * CAP_SCORE_VALUE;
+    function updateRunScore() {
+      state.score = distanceScore() + capScore();
+    }
     const todayScoreDate = () => new Date().toISOString().slice(0, 10);
     const todayBoardKey = () => `${LEADERBOARD_KEY_PREFIX}${todayScoreDate()}`;
     const displayBoardDate = (dateKey = todayBoardKey()) => (
@@ -1314,12 +1330,14 @@
       document.documentElement.style.setProperty("--app-height", `${height}px`);
     }
 
+    function isPhoneSizedViewport() {
+      const width = state.displayWidth || window.innerWidth || 0;
+      const height = state.displayHeight || window.innerHeight || 0;
+      return width <= 820 || height <= 520;
+    }
+
     function isMobileCabinet() {
-      return Boolean(
-        (window.matchMedia && window.matchMedia("(max-width: 820px)").matches) ||
-        (window.matchMedia && window.matchMedia("(max-height: 520px)").matches) ||
-        (window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches)
-      );
+      return isPhoneSizedViewport();
     }
 
     function usesFixedWorld() {
@@ -1332,7 +1350,44 @@
     }
 
     function isMobilePortraitDisplay() {
-      return state.displayWidth <= 820 && state.displayHeight > state.displayWidth;
+      return isPhoneSizedViewport() && state.displayHeight > state.displayWidth;
+    }
+
+    function mobileSafeContentRect(options = {}) {
+      if (!isMobilePortraitDisplay()) {
+        return { x: 0, y: 0, w: state.width, h: state.height };
+      }
+
+      const fixedWorld = usesFixedWorld();
+      const scale = fixedWorld ? Math.max(0.001, state.viewport.scale || 1) : 1;
+      const base = fixedWorld
+        ? {
+          x: -state.viewport.x / scale,
+          y: -state.viewport.y / scale,
+          w: state.displayWidth / scale,
+          h: state.displayHeight / scale
+        }
+        : { x: 0, y: 0, w: state.width, h: state.height };
+      const basisWidth = fixedWorld ? state.displayWidth : state.width;
+      const basisHeight = fixedWorld ? state.displayHeight : state.height;
+      const top = options.tight
+        ? clamp(basisHeight * 0.045, 18, 42)
+        : clamp(basisHeight * 0.145, 78, 118);
+      const bottom = options.tight
+        ? clamp(basisHeight * 0.05, 20, 48)
+        : clamp(basisHeight * 0.13, 76, 118);
+      const side = clamp(basisWidth * 0.035, 12, 24);
+      const topWorld = Math.min(top, basisHeight * 0.25) / scale;
+      const bottomWorld = bottom / scale;
+      const sideWorld = side / scale;
+      const y = base.y + topWorld;
+      const h = Math.max(140, base.h - topWorld - bottomWorld);
+      return {
+        x: base.x + sideWorld,
+        y,
+        w: Math.max(120, base.w - sideWorld * 2),
+        h
+      };
     }
 
     function usesEasyMobileGameplayCamera() {
@@ -1371,7 +1426,11 @@
       const viewportWidth = EASY_WORLD_WIDTH * safeScale;
       const viewportHeight = EASY_WORLD_HEIGHT * safeScale;
       const targetPlayerX = cssWidth * 0.26;
-      const targetPlayerY = cssHeight * 0.48;
+      const topSafe = clamp(cssHeight * 0.145, 78, 118);
+      const bottomSafe = clamp(cssHeight * 0.13, 76, 118);
+      const playTop = Math.min(topSafe, cssHeight * 0.25);
+      const playHeight = Math.max(220, cssHeight - playTop - bottomSafe);
+      const targetPlayerY = playTop + playHeight * 0.45;
       const minX = cssWidth - viewportWidth;
       const minY = cssHeight - viewportHeight;
       return {
@@ -1620,6 +1679,7 @@
       state.score = 0;
       state.distance = 0;
       state.capsCollected = 0;
+      state.obstaclePasses = 0;
       state.backgroundSceneIndex = 0;
       state.backgroundPreviousSceneIndex = 0;
       state.backgroundJumpCount = 0;
@@ -1629,6 +1689,7 @@
       state.obstacles = [];
       state.caps = [];
       state.particles = [];
+      state.floatingTexts = [];
       resetInputRects();
       state.leaderboard.submitted = false;
       state.leaderboard.inputRect = null;
@@ -1840,7 +1901,7 @@
 
     function spawnObstacle(x = state.width + 80) {
       const margin = Math.max(70, state.height * 0.12);
-      const gap = clamp(state.gap - state.score * 0.75, 178, 238);
+      const gap = clamp(state.gap - state.obstaclePasses * 0.75, 178, 238);
       const center = rand(margin + gap * 0.5, state.height - margin - gap * 0.5);
       const width = rand(62, 84) * (state.gameMode === "easy" ? 0.9 : 1);
       const sprites = randomObstacleSpritePair();
@@ -1940,6 +2001,17 @@
       }
     }
 
+    function addFloatingText(x, y, text, color) {
+      state.floatingTexts.push({
+        x,
+        y,
+        text,
+        color,
+        life: 1,
+        maxLife: 1
+      });
+    }
+
     function crash() {
       if (state.phase !== "running") {
         return;
@@ -2019,8 +2091,9 @@
       player.rotation = clamp(player.vy / 650, -0.5, 0.72);
       player.charge = usesFixedWorld() ? 1 : clamp(player.charge + dt * 0.22, 0, 1);
 
-      const speed = state.speed + Math.min(170, state.score * 7.2);
+      const speed = state.speed + Math.min(170, state.obstaclePasses * 7.2);
       state.distance += speed * dt * 0.28;
+      updateRunScore();
       for (const star of state.stars) {
         star.x -= speed * star.z * dt * 0.16;
         if (star.x < -4) {
@@ -2033,7 +2106,7 @@
         obstacle.x -= speed * dt;
         if (!obstacle.passed && obstacle.x + obstacle.width < player.x) {
           obstacle.passed = true;
-          state.score += 1;
+          state.obstaclePasses += 1;
           playTone("score");
           burst(player.x - 18, player.y - 28, 7, "#9cff6d");
         }
@@ -2044,9 +2117,10 @@
         cap.spin += dt * 2.2;
         if (!cap.taken && Math.hypot(cap.x - player.x, cap.y - player.y) < player.radius + cap.r) {
           cap.taken = true;
-          state.score += 2;
           state.capsCollected += 1;
-          if (state.capsCollected % CAP_MILESTONE === 0) {
+          updateRunScore();
+          addFloatingText(cap.x, cap.y, `+${CAP_SCORE_VALUE} CAPS`, "#ffc857");
+          if (state.gameMode === "hard" && state.capsCollected % CAP_MILESTONE === 0) {
             state.player.charge = clamp(state.player.charge + rollCapRecharge(), 0, 1);
             burst(cap.x, cap.y, 8, "#9cff6d");
           }
@@ -2120,6 +2194,12 @@
         particle.vy += 230 * dt;
       }
       state.particles = state.particles.filter((particle) => particle.life > 0);
+
+      for (const floatingText of state.floatingTexts) {
+        floatingText.life -= dt;
+        floatingText.y -= dt * 34;
+      }
+      state.floatingTexts = state.floatingTexts.filter((floatingText) => floatingText.life > 0);
     }
 
     function updateHud() {
@@ -2146,13 +2226,18 @@
       bestText.textContent = String(Math.max(state.best, state.score));
       const charge = Math.round(state.player.charge * 100);
       const capProgress = state.capsCollected % CAP_MILESTONE;
+      const showCapProgress = state.gameMode === "hard";
       chargeText.textContent = `${charge}%`;
       capsText.textContent = `${capProgress}/${CAP_MILESTONE}`;
+      if (capsText.parentElement) {
+        capsText.parentElement.hidden = !showCapProgress;
+      }
       chargeBar.style.transform = `scaleX(${state.player.charge})`;
       mobileScoreText.textContent = String(state.score);
       mobileBestText.textContent = String(Math.max(state.best, state.score));
       mobileChargeText.textContent = `${charge}%`;
       mobileCapsText.textContent = `Caps ${capProgress}/${CAP_MILESTONE}`;
+      mobileCapsText.hidden = !showCapProgress;
       mobileChargeBar.style.transform = `scaleX(${state.player.charge})`;
       mobileDistanceText.textContent = String(Math.floor(state.distance));
       startButton.textContent = state.phase === "scoreboard" ? "Back" : state.phase === "mode" ? "Mode" : state.phase === "select" ? "Choose" : state.phase === "running" ? "Restart" : "Start";
@@ -2222,6 +2307,7 @@
       drawCaps();
       drawPlayer();
       drawParticles();
+      drawFloatingTexts();
       drawHudOverlay();
 
       if (state.phase === "ready") {
@@ -2369,6 +2455,9 @@
     }
 
     function drawModeSelect() {
+      const mobileModeLayout = isMobileCabinet();
+      const safe = mobileModeLayout ? mobileSafeContentRect() : { x: 0, y: 0, w: state.width, h: state.height };
+      const titleY = mobileModeLayout ? safe.y + clamp(safe.h * 0.075, 22, 36) : clamp(state.height * 0.19, 54, 92);
       ctx.save();
       ctx.fillStyle = "rgba(5, 12, 6, 0.46)";
       ctx.fillRect(0, 0, state.width, state.height);
@@ -2376,16 +2465,10 @@
       ctx.fillStyle = "#9cff6d";
       ctx.shadowColor = "rgba(156, 255, 109, 0.55)";
       ctx.shadowBlur = 14;
-      fitMonoFont("SELECT MODE", 34, 20, state.width - 44);
-      ctx.fillText("SELECT MODE", state.width / 2, clamp(state.height * 0.19, 54, 92));
+      fitMonoFont("SELECT MODE", 34, 20, safe.w - 20);
+      ctx.fillText("SELECT MODE", state.width / 2, titleY);
       ctx.shadowBlur = 0;
 
-      const cardGap = clamp(state.width * 0.045, 18, 34);
-      const cardW = clamp((state.width - cardGap - 80) / 2, 190, 300);
-      const cardH = clamp(state.height * 0.28, 128, 178);
-      const totalW = cardW * 2 + cardGap;
-      const startX = (state.width - totalW) / 2;
-      const y = clamp(state.height * 0.36, 134, state.height - cardH - 86);
       const modes = [
         {
           mode: "easy",
@@ -2398,9 +2481,23 @@
           lines: ["FULL SCREEN PHYSICS", "CORE CHARGE COSTS"]
         }
       ];
+      const cardGap = mobileModeLayout ? clamp(safe.h * 0.035, 14, 22) : clamp(state.width * 0.045, 18, 34);
+      const columns = mobileModeLayout ? 1 : 2;
+      const cardW = mobileModeLayout
+        ? clamp(safe.w * 0.86, 236, 330)
+        : clamp((state.width - cardGap - 80) / 2, 190, 300);
+      const cardH = mobileModeLayout ? clamp(safe.h * 0.22, 112, 150) : clamp(state.height * 0.28, 128, 178);
+      const totalW = cardW * columns + cardGap * (columns - 1);
+      const totalH = mobileModeLayout ? cardH * modes.length + cardGap * (modes.length - 1) : cardH;
+      const startX = (state.width - totalW) / 2;
+      const y = mobileModeLayout
+        ? safe.y + clamp(safe.h * 0.17, 58, 92)
+        : clamp(state.height * 0.36, 134, state.height - cardH - 86);
 
       state.modeButtonRects = modes.map((item, index) => {
-        const rect = { x: startX + index * (cardW + cardGap), y, w: cardW, h: cardH, mode: item.mode };
+        const rect = mobileModeLayout
+          ? { x: startX, y: y + index * (cardH + cardGap), w: cardW, h: cardH, mode: item.mode }
+          : { x: startX + index * (cardW + cardGap), y, w: cardW, h: cardH, mode: item.mode };
         const selected = state.modeFocus === item.mode;
         ctx.fillStyle = selected ? "rgba(156, 255, 109, 0.16)" : "rgba(5, 12, 6, 0.88)";
         ctx.strokeStyle = selected ? "#9cff6d" : "rgba(156, 255, 109, 0.42)";
@@ -2427,8 +2524,8 @@
       });
 
       ctx.fillStyle = "rgba(217, 255, 208, 0.78)";
-      fitMonoFont("CLICK/TAP A MODE TO CONTINUE", 15, 9, state.width - 42);
-      ctx.fillText("CLICK/TAP A MODE TO CONTINUE", state.width / 2, state.height - 34);
+      fitMonoFont("CLICK/TAP A MODE TO CONTINUE", 15, 9, safe.w - 12);
+      ctx.fillText("CLICK/TAP A MODE TO CONTINUE", state.width / 2, safe.y + safe.h - 8);
       ctx.restore();
     }
 
@@ -2495,7 +2592,9 @@
     }
 
     function drawCharacterSelect() {
-      const titleY = clamp(state.height * 0.14, 32, 46);
+      const mobileSelectLayout = isMobileCabinet();
+      const safe = mobileSelectLayout ? mobileSafeContentRect() : { x: 0, y: 0, w: state.width, h: state.height };
+      const titleY = mobileSelectLayout ? safe.y + clamp(safe.h * 0.045, 18, 28) : clamp(state.height * 0.14, 32, 46);
       ctx.save();
       ctx.fillStyle = "rgba(5, 12, 6, 0.42)";
       ctx.fillRect(0, 0, state.width, state.height);
@@ -2511,10 +2610,9 @@
       fitMonoFont(modeLabel(), 14, 9, state.width - 60);
       ctx.fillText(modeLabel(), state.width / 2, titleY + 17);
 
-      const mobileSelectLayout = isMobileCabinet();
       const pageCount = characterPageCount();
-      const hintY = state.height - 14;
-      const pageControlY = hintY - 25;
+      const hintY = mobileSelectLayout ? safe.y + safe.h - 4 : state.height - 14;
+      const pageControlY = hintY - (mobileSelectLayout ? 22 : 25);
       const boardButtonH = clamp(state.height * 0.046, 18, 24);
       const pageButtonH = pageCount > 1 ? clamp(state.height * 0.052, 17, 24) : 0;
       const reservedPageButtonH = mobileSelectLayout ? clamp(state.height * 0.052, 17, 24) : pageButtonH;
@@ -2556,7 +2654,9 @@
       const sidePad = clamp(state.width * 0.035, 10, 18);
       const gapX = clamp(state.width * 0.018, 5, 10);
       const gapY = clamp(state.height * 0.025, 5, 9);
-      const gridTop = mobileSelectLayout ? clamp(titleY + 34, 78, state.height * 0.3) : clamp(rosterTabY + rosterTabH + 10, 78, state.height * 0.34);
+      const gridTop = mobileSelectLayout
+        ? Math.max(safe.y + 48, titleY + 34)
+        : clamp(rosterTabY + rosterTabH + 10, 78, state.height * 0.34);
       const gridBottom = mobileSelectLayout ? rosterTabY - 8 : boardControlY - 8;
       const rawCardW = Math.max(44, (state.width - sidePad * 2 - gapX * (columns - 1)) / columns);
       const cardW = count === 1 ? Math.min(rawCardW, clamp(state.width * 0.36, 170, 260)) : rawCardW;
@@ -3041,6 +3141,25 @@
       ctx.globalAlpha = 1;
     }
 
+    function drawFloatingTexts() {
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for (const floatingText of state.floatingTexts) {
+        const progress = 1 - clamp(floatingText.life / floatingText.maxLife, 0, 1);
+        const alpha = clamp(floatingText.life / floatingText.maxLife, 0, 1);
+        const size = 15 + progress * 5;
+        ctx.globalAlpha = alpha;
+        ctx.font = `800 ${size}px Courier New`;
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.78)";
+        ctx.strokeText(floatingText.text, floatingText.x, floatingText.y);
+        ctx.fillStyle = floatingText.color;
+        ctx.fillText(floatingText.text, floatingText.x, floatingText.y);
+      }
+      ctx.restore();
+    }
+
     function drawHudOverlay() {
       if (isMobileCabinet()) {
         return;
@@ -3105,9 +3224,11 @@
       ctx.font = "700 10px Courier New";
       ctx.fillText(`${Math.round(charge * 100)}%`, state.width / 2, y + meterH + 12);
 
-      const capProgress = state.capsCollected % CAP_MILESTONE;
-      ctx.fillStyle = "rgba(255, 200, 87, 0.86)";
-      ctx.fillText(`CAPS ${capProgress}/${CAP_MILESTONE}`, state.width / 2, y + meterH + 25);
+      if (state.gameMode === "hard") {
+        const capProgress = state.capsCollected % CAP_MILESTONE;
+        ctx.fillStyle = "rgba(255, 200, 87, 0.86)";
+        ctx.fillText(`CAPS ${capProgress}/${CAP_MILESTONE}`, state.width / 2, y + meterH + 25);
+      }
       ctx.restore();
     }
 
@@ -3133,10 +3254,27 @@
 
     function drawGameOverScreen() {
       ctx.save();
+      const visibleGameOver = isMobilePortraitDisplay()
+        ? mobileSafeContentRect({ tight: true })
+        : usesEasyMobileGameOverCamera()
+          ? {
+            x: -state.viewport.x / state.viewport.scale,
+            y: -state.viewport.y / state.viewport.scale,
+            w: state.displayWidth / state.viewport.scale,
+            h: state.displayHeight / state.viewport.scale
+          }
+          : { x: 0, y: 0, w: state.width, h: state.height };
       if (gameOverImage.complete && gameOverImage.naturalWidth) {
         ctx.fillStyle = "#050505";
         ctx.fillRect(0, 0, state.width, state.height);
-        drawContainImage(gameOverImage, 0, 0, state.width, state.height, clamp(Math.min(state.width, state.height) * 0.035, 8, 28));
+        drawContainImage(
+          gameOverImage,
+          visibleGameOver.x,
+          visibleGameOver.y,
+          visibleGameOver.w,
+          visibleGameOver.h,
+          clamp(Math.min(visibleGameOver.w, visibleGameOver.h) * 0.035, 8, 28)
+        );
       } else {
         ctx.fillStyle = "#050505";
         ctx.fillRect(0, 0, state.width, state.height);
@@ -3145,14 +3283,6 @@
       ctx.fillStyle = "rgba(0, 0, 0, 0.36)";
       ctx.fillRect(0, 0, state.width, state.height);
 
-      const visibleGameOver = usesEasyMobileGameOverCamera()
-        ? {
-          x: -state.viewport.x / state.viewport.scale,
-          y: -state.viewport.y / state.viewport.scale,
-          w: state.displayWidth / state.viewport.scale,
-          h: state.displayHeight / state.viewport.scale
-        }
-        : { x: 0, y: 0, w: state.width, h: state.height };
       const titleX = visibleGameOver.x + visibleGameOver.w * 0.5;
       const titleY = visibleGameOver.y + visibleGameOver.h * 0.5;
       const titleMaxW = Math.max(120, visibleGameOver.w - 28);
@@ -3174,7 +3304,7 @@
     function drawLeaderboardPanel(options = {}) {
       const viewer = Boolean(options.viewer);
       const board = state.leaderboard;
-      const panelBounds = !viewer && usesEasyMobileGameOverCamera()
+      let panelBounds = !viewer && usesEasyMobileGameOverCamera()
         ? {
           x: -state.viewport.x / state.viewport.scale,
           y: -state.viewport.y / state.viewport.scale,
@@ -3182,6 +3312,11 @@
           h: state.displayHeight / state.viewport.scale
         }
         : { x: 0, y: 0, w: state.width, h: state.height };
+      if (isMobilePortraitDisplay()) {
+        panelBounds = state.phase === "over"
+          ? mobileSafeContentRect({ tight: true })
+          : mobileSafeContentRect();
+      }
       const panelCenterX = panelBounds.x + panelBounds.w * 0.5;
       const safePanelMargin = clamp(Math.min(panelBounds.w, panelBounds.h) * 0.035, 10, 24);
       const boxW = Math.min(clamp(panelBounds.w * 0.78, 280, 610), panelBounds.w - safePanelMargin * 2);
@@ -3192,10 +3327,18 @@
       const buttonH = clamp(boxH * 0.105, 30, 40);
       const inputH = buttonH;
       const bottomY = y + boxH - pad;
-      const inputW = clamp(boxW * 0.28, 78, 126);
-      const buttonW = clamp(boxW * 0.24, 78, 116);
+      const controlGap = isMobilePortraitDisplay() ? 6 : 8;
+      const controlsAvailableW = boxW - pad * 2;
+      const defaultInputW = clamp(boxW * 0.28, 78, 126);
+      const defaultButtonW = clamp(boxW * 0.24, 78, 116);
+      const inputW = isMobilePortraitDisplay()
+        ? clamp(controlsAvailableW * 0.31, 72, 98)
+        : defaultInputW;
+      const buttonW = isMobilePortraitDisplay()
+        ? clamp((controlsAvailableW - inputW - controlGap * 2) / 2, 66, 96)
+        : defaultButtonW;
       const inputX = x + pad;
-      const submitX = inputX + inputW + 8;
+      const submitX = inputX + inputW + controlGap;
       const restartX = x + boxW - pad - buttonW;
       const controlsY = bottomY - buttonH;
       const rowsTop = y + pad + 96;
