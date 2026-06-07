@@ -892,6 +892,8 @@
     bigndn1988Sprite.src = "assets/bigndn1988.png";
     const sharkbite07Sprite = new Image();
     sharkbite07Sprite.src = "assets/sharkbite-07.png";
+    const dukeQuackemSprite = new Image();
+    dukeQuackemSprite.src = "assets/duke-quackem.png";
     const backgroundSpritePaths = [
       "assets/wulfzx-underground-background.png",
       "assets/wulfzx-vault-day-background.png",
@@ -950,20 +952,21 @@
       { id: "youyosong", name: "YouYosong", readyName: "YouYosong", titleLines: ["YOUYO", "SONG"], image: youyosongSprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
       { id: "coconut", name: "Coconut", readyName: "Coconut", titleLines: ["COCONUT"], image: coconutSprite, spriteW: 118, gameplayMaxW: 118, radius: 20 },
       { id: "bigndn1988", name: "BIGndn1988", readyName: "BIGndn1988", titleLines: ["BIGNDN", "1988"], image: bigndn1988Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
-      { id: "sharkbite07", name: "Sharkbite 07", readyName: "Sharkbite 07", titleLines: ["SHARKBITE", "07"], image: sharkbite07Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 }
+      { id: "sharkbite07", name: "Sharkbite 07", readyName: "Sharkbite 07", titleLines: ["SHARKBITE", "07"], image: sharkbite07Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
+      { id: "dukequackem", name: "Duke Quackem", readyName: "Duke Quackem", titleLines: ["DUKE", "QUACKEM"], image: dukeQuackemSprite, spriteW: 132, gameplayMaxW: 132, radius: 20 }
     ];
     const characterRosters = [
       {
         id: "nukeCrew",
         name: "Nuke Crew",
         title: "NUKE CREW",
-        characterIds: characters.filter((character) => character.id !== "sharkbite07").map((character) => character.id)
+        characterIds: characters.filter((character) => !["sharkbite07", "dukequackem"].includes(character.id)).map((character) => character.id)
       },
       {
         id: "rocketSquad",
         name: "Rocket Squad",
         title: "ROCKET SQUAD",
-        characterIds: ["sharkbite07"]
+        characterIds: ["sharkbite07", "dukequackem"]
       }
     ];
     const FIREBASE_CONFIG = {
