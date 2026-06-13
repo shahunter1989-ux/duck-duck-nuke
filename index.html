@@ -892,6 +892,8 @@
     bigndn1988Sprite.src = "assets/bigndn1988.png";
     const retroChick24Sprite = new Image();
     retroChick24Sprite.src = "assets/retrochick24.png";
+    const docHolidaySprite = new Image();
+    docHolidaySprite.src = "assets/doc-holiday.png";
     const sharkbite07Sprite = new Image();
     sharkbite07Sprite.src = "assets/sharkbite-07.png";
     const dukeQuackemSprite = new Image();
@@ -995,6 +997,7 @@
       { id: "coconut", name: "Coconut", readyName: "Coconut", titleLines: ["COCONUT"], image: coconutSprite, spriteW: 118, gameplayMaxW: 118, radius: 20 },
       { id: "bigndn1988", name: "BIGndn1988", readyName: "BIGndn1988", titleLines: ["BIGNDN", "1988"], image: bigndn1988Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
       { id: "retrochick24", name: "RetroChick24", readyName: "RetroChick24", titleLines: ["RETRO", "CHICK24"], image: retroChick24Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
+      { id: "docholiday", name: "Doc Holiday", readyName: "Doc Holiday", titleLines: ["DOC", "HOLIDAY"], image: docHolidaySprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
       { id: "sharkbite07", name: "Sharkbite 07", readyName: "Sharkbite 07", titleLines: ["SHARKBITE", "07"], image: sharkbite07Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
       { id: "dukequackem", name: "Duke Quackem", readyName: "Duke Quackem", titleLines: ["DUKE", "QUACKEM"], image: dukeQuackemSprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
       { id: "quackshot01", name: "Quackshot 01", readyName: "Quackshot 01", titleLines: ["QUACKSHOT", "01"], image: quackshot01Sprite, spriteW: 132, gameplayMaxW: 132, radius: 20 },
@@ -1137,6 +1140,7 @@
         initials: localStorage.getItem("pipBoyJetpackInitials") || "",
         status: "Firebase config needed",
         dateKey: "",
+        mode: "hard",
         loading: false,
         submitted: false,
         inputRect: null,
@@ -1236,9 +1240,14 @@
       state.score = distanceScore() + capScore();
     }
     const todayScoreDate = () => new Date().toISOString().slice(0, 10);
-    const todayBoardKey = () => `${LEADERBOARD_KEY_PREFIX}${todayScoreDate()}`;
+    const normalizeGameMode = (mode = state.gameMode) => (mode === "easy" ? "easy" : "hard");
+    const todayBoardKey = (mode = state.gameMode) => `${LEADERBOARD_KEY_PREFIX}${normalizeGameMode(mode)}-${todayScoreDate()}`;
     const displayBoardDate = (dateKey = todayBoardKey()) => (
-      dateKey.startsWith(LEADERBOARD_KEY_PREFIX) ? dateKey.slice(LEADERBOARD_KEY_PREFIX.length) : dateKey
+      (dateKey.startsWith(LEADERBOARD_KEY_PREFIX) ? dateKey.slice(LEADERBOARD_KEY_PREFIX.length) : dateKey)
+        .replace(/^(easy|hard)-/, "")
+    );
+    const leaderboardTitle = (viewer = false, mode = state.gameMode) => (
+      `${normalizeGameMode(mode).toUpperCase()} ${viewer ? "TOP 5" : "DAILY TOP 5"}`
     );
     function leaderboardResetCountdown() {
       const now = new Date();
@@ -1330,9 +1339,12 @@
         .slice(0, LEADERBOARD_LIMIT);
     }
 
-    async function loadLeaderboard() {
+    async function loadLeaderboard(mode = state.gameMode) {
       const board = state.leaderboard;
-      board.dateKey = todayBoardKey();
+      const boardMode = normalizeGameMode(mode);
+      const boardDateKey = todayBoardKey(boardMode);
+      board.mode = boardMode;
+      board.dateKey = boardDateKey;
       board.loading = true;
       board.inputRect = null;
       board.submitRect = null;
@@ -1344,7 +1356,7 @@
           return;
         }
         const { db, api } = firebase;
-        const scoresRef = api.collection(db, LEADERBOARD_ROOT, board.dateKey, "scores");
+        const scoresRef = api.collection(db, LEADERBOARD_ROOT, boardDateKey, "scores");
         const scoresQuery = api.query(
           scoresRef,
           api.orderBy("score", "desc"),
@@ -1389,12 +1401,14 @@
         const { db, api } = firebase;
         const character = characters[state.selectedCharacter] || characters[0];
         const score = Math.max(0, Math.floor(state.score));
-        const scoresRef = api.collection(db, LEADERBOARD_ROOT, todayBoardKey(), "scores");
+        const boardMode = normalizeGameMode(state.gameMode);
+        const scoresRef = api.collection(db, LEADERBOARD_ROOT, todayBoardKey(boardMode), "scores");
         await api.addDoc(scoresRef, {
           initials,
           score,
           characterId: character.id,
           characterName: character.name,
+          gameMode: boardMode,
           createdAt: api.serverTimestamp()
         });
         board.submitted = true;
@@ -3394,6 +3408,7 @@
     function drawLeaderboardPanel(options = {}) {
       const viewer = Boolean(options.viewer);
       const board = state.leaderboard;
+      const boardMode = normalizeGameMode(board.mode || state.gameMode);
       let panelBounds = !viewer && usesEasyMobileGameOverCamera()
         ? {
           x: -state.viewport.x / state.viewport.scale,
@@ -3410,7 +3425,10 @@
       const panelCenterX = panelBounds.x + panelBounds.w * 0.5;
       const safePanelMargin = clamp(Math.min(panelBounds.w, panelBounds.h) * 0.035, 10, 24);
       const boxW = Math.min(clamp(panelBounds.w * 0.78, 280, 610), panelBounds.w - safePanelMargin * 2);
-      const boxH = Math.min(clamp(panelBounds.h * 0.74, 248, 390), panelBounds.h - safePanelMargin * 2);
+      const boxH = Math.min(
+        clamp(panelBounds.h * (viewer ? 0.74 : 0.82), viewer ? 248 : 300, viewer ? 390 : 430),
+        panelBounds.h - safePanelMargin * 2
+      );
       const x = panelBounds.x + (panelBounds.w - boxW) / 2;
       const y = panelBounds.y + (panelBounds.h - boxH) / 2;
       const pad = clamp(boxW * 0.055, 14, 24);
@@ -3431,10 +3449,10 @@
       const submitX = inputX + inputW + controlGap;
       const restartX = x + boxW - pad - buttonW;
       const controlsY = bottomY - buttonH;
-      const rowsTop = y + pad + 96;
+      const rowsTop = y + pad + (viewer ? 96 : 138);
       const statusY = controlsY - 12;
       const rowsBottom = statusY - 18;
-      const rowH = clamp((rowsBottom - rowsTop) / LEADERBOARD_LIMIT, 16, 33);
+      const rowH = clamp((rowsBottom - rowsTop) / LEADERBOARD_LIMIT, 14, 33);
 
       board.inputRect = viewer ? null : { x: inputX, y: controlsY, w: inputW, h: inputH };
       board.submitRect = viewer || board.submitted ? null : { x: submitX, y: controlsY, w: buttonW, h: buttonH };
@@ -3449,18 +3467,34 @@
 
       ctx.textAlign = "center";
       ctx.fillStyle = "#9cff6d";
-      const title = viewer ? "LIVE TOP 5" : "DAILY TOP 5";
+      const title = leaderboardTitle(viewer, boardMode);
       fitMonoFont(title, 28, 18, boxW - pad * 2);
       ctx.fillText(title, panelCenterX, y + pad + 24);
       ctx.fillStyle = "rgba(217, 255, 208, 0.76)";
-      const boardDateLabel = displayBoardDate(board.dateKey || todayBoardKey());
-      const dateLine = viewer ? `UTC ${boardDateLabel}` : `UTC ${boardDateLabel}   SCORE ${state.score}`;
+      const boardDateLabel = displayBoardDate(board.dateKey || todayBoardKey(boardMode));
+      const dateLine = `UTC ${boardDateLabel}`;
       fitMonoFont(dateLine, 14, 9, boxW - pad * 2);
       ctx.fillText(dateLine, panelCenterX, y + pad + 48);
       ctx.fillStyle = "#ffc857";
       const resetText = `RESETS IN ${leaderboardResetCountdown()}`;
       fitMonoFont(resetText, 16, 9, boxW - pad * 2);
       ctx.fillText(resetText, panelCenterX, y + pad + 70);
+
+      if (!viewer) {
+        const character = characters[state.selectedCharacter] || characters[0];
+        const characterLine = `${modeDisplayName(boardMode)} / ${(character.readyName || character.name).toUpperCase()}`;
+        const breakdownLine = `DISTANCE +${distanceScore()}   CAPS +${capScore()}`;
+        const totalLine = `TOTAL ${Math.max(0, Math.floor(state.score))}`;
+        ctx.fillStyle = "rgba(217, 255, 208, 0.82)";
+        fitMonoFont(characterLine, 13, 8, boxW - pad * 2);
+        ctx.fillText(characterLine, panelCenterX, y + pad + 91);
+        ctx.fillStyle = "#d9ffd0";
+        fitMonoFont(breakdownLine, 14, 8, boxW - pad * 2);
+        ctx.fillText(breakdownLine, panelCenterX, y + pad + 108);
+        ctx.fillStyle = "#ffc857";
+        fitMonoFont(totalLine, 16, 9, boxW - pad * 2);
+        ctx.fillText(totalLine, panelCenterX, y + pad + 126);
+      }
 
       ctx.textAlign = "left";
       const entries = board.loading ? [] : board.entries;
