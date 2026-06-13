@@ -1408,7 +1408,6 @@
           score,
           characterId: character.id,
           characterName: character.name,
-          gameMode: boardMode,
           createdAt: api.serverTimestamp()
         });
         board.submitted = true;
@@ -3336,11 +3335,30 @@
       ctx.restore();
     }
 
+    function visiblePlayRect(options = {}) {
+      if (isMobilePortraitDisplay()) {
+        return mobileSafeContentRect(options);
+      }
+      if (usesFixedWorld()) {
+        const scale = Math.max(0.001, state.viewport.scale || 1);
+        return {
+          x: -state.viewport.x / scale,
+          y: -state.viewport.y / scale,
+          w: state.displayWidth / scale,
+          h: state.displayHeight / scale
+        };
+      }
+      return { x: 0, y: 0, w: state.width, h: state.height };
+    }
+
     function drawMessage(title, detail) {
-      const boxW = clamp(state.width * 0.62, 270, 540);
-      const boxH = 138;
-      const x = (state.width - boxW) / 2;
-      const y = (state.height - boxH) / 2;
+      const bounds = visiblePlayRect({ tight: true });
+      const margin = clamp(Math.min(bounds.w, bounds.h) * 0.04, 10, 24);
+      const boxW = Math.min(clamp(bounds.w * 0.72, 230, 540), Math.max(160, bounds.w - margin * 2));
+      const boxH = Math.min(clamp(bounds.h * 0.23, 104, 138), Math.max(84, bounds.h - margin * 2));
+      const x = bounds.x + (bounds.w - boxW) / 2;
+      const y = bounds.y + (bounds.h - boxH) / 2;
+      const centerX = x + boxW / 2;
 
       ctx.fillStyle = "rgba(5, 12, 6, 0.94)";
       ctx.strokeStyle = "rgba(156, 255, 109, 0.7)";
@@ -3349,11 +3367,11 @@
 
       ctx.fillStyle = "#9cff6d";
       ctx.textAlign = "center";
-      fitMonoFont(title, 28, 18, boxW - 30);
-      ctx.fillText(title, state.width / 2, y + 54);
+      fitMonoFont(title, clamp(Math.min(boxW * 0.075, boxH * 0.24), 17, 28), 11, boxW - 30);
+      ctx.fillText(title, centerX, y + boxH * 0.4);
       ctx.fillStyle = "rgba(217, 255, 208, 0.78)";
-      fitMonoFont(detail, 15, 11, boxW - 28);
-      ctx.fillText(detail, state.width / 2, y + 92);
+      fitMonoFont(detail, clamp(Math.min(boxW * 0.045, boxH * 0.14), 11, 15), 9, boxW - 28);
+      ctx.fillText(detail, centerX, y + boxH * 0.67);
     }
 
     function drawGameOverScreen() {
@@ -3409,50 +3427,58 @@
       const viewer = Boolean(options.viewer);
       const board = state.leaderboard;
       const boardMode = normalizeGameMode(board.mode || state.gameMode);
-      let panelBounds = !viewer && usesEasyMobileGameOverCamera()
-        ? {
-          x: -state.viewport.x / state.viewport.scale,
-          y: -state.viewport.y / state.viewport.scale,
-          w: state.displayWidth / state.viewport.scale,
-          h: state.displayHeight / state.viewport.scale
-        }
-        : { x: 0, y: 0, w: state.width, h: state.height };
-      if (isMobilePortraitDisplay()) {
-        panelBounds = state.phase === "over"
-          ? mobileSafeContentRect({ tight: true })
-          : mobileSafeContentRect();
-      }
+      const mobilePanel = isMobilePortraitDisplay();
+      const panelBounds = mobilePanel && state.phase === "over"
+        ? visiblePlayRect({ tight: true })
+        : visiblePlayRect();
       const panelCenterX = panelBounds.x + panelBounds.w * 0.5;
       const safePanelMargin = clamp(Math.min(panelBounds.w, panelBounds.h) * 0.035, 10, 24);
-      const boxW = Math.min(clamp(panelBounds.w * 0.78, 280, 610), panelBounds.w - safePanelMargin * 2);
+      const boxW = Math.min(
+        clamp(panelBounds.w * (mobilePanel ? 0.96 : 0.78), mobilePanel ? 220 : 280, 610),
+        panelBounds.w - safePanelMargin * 2
+      );
       const boxH = Math.min(
-        clamp(panelBounds.h * (viewer ? 0.74 : 0.82), viewer ? 248 : 300, viewer ? 390 : 430),
+        clamp(
+          panelBounds.h * (viewer ? (mobilePanel ? 0.78 : 0.74) : (mobilePanel ? 0.9 : 0.82)),
+          viewer ? (mobilePanel ? 230 : 248) : (mobilePanel ? 320 : 300),
+          viewer ? 390 : (mobilePanel ? 470 : 430)
+        ),
         panelBounds.h - safePanelMargin * 2
       );
       const x = panelBounds.x + (panelBounds.w - boxW) / 2;
       const y = panelBounds.y + (panelBounds.h - boxH) / 2;
       const pad = clamp(boxW * 0.055, 14, 24);
-      const buttonH = clamp(boxH * 0.105, 30, 40);
+      const buttonH = clamp(boxH * (mobilePanel ? 0.112 : 0.105), mobilePanel ? 34 : 30, mobilePanel ? 46 : 40);
       const inputH = buttonH;
       const bottomY = y + boxH - pad;
-      const controlGap = isMobilePortraitDisplay() ? 6 : 8;
+      const controlGap = mobilePanel ? 6 : 8;
       const controlsAvailableW = boxW - pad * 2;
       const defaultInputW = clamp(boxW * 0.28, 78, 126);
       const defaultButtonW = clamp(boxW * 0.24, 78, 116);
-      const inputW = isMobilePortraitDisplay()
-        ? clamp(controlsAvailableW * 0.31, 72, 98)
+      const inputW = mobilePanel
+        ? clamp(controlsAvailableW * 0.3, 68, 100)
         : defaultInputW;
-      const buttonW = isMobilePortraitDisplay()
-        ? clamp((controlsAvailableW - inputW - controlGap * 2) / 2, 66, 96)
+      const availableButtonW = Math.max(44, (controlsAvailableW - inputW - controlGap * 2) / 2);
+      const buttonW = mobilePanel
+        ? clamp(availableButtonW, Math.min(58, availableButtonW), 104)
         : defaultButtonW;
       const inputX = x + pad;
       const submitX = inputX + inputW + controlGap;
       const restartX = x + boxW - pad - buttonW;
       const controlsY = bottomY - buttonH;
-      const rowsTop = y + pad + (viewer ? 96 : 138);
-      const statusY = controlsY - 12;
-      const rowsBottom = statusY - 18;
-      const rowH = clamp((rowsBottom - rowsTop) / LEADERBOARD_LIMIT, 14, 33);
+      const titleY = y + pad + clamp(boxH * 0.06, 18, 28);
+      const lineGap = clamp(boxH * 0.047, 14, 22);
+      const dateY = titleY + lineGap;
+      const resetY = dateY + lineGap;
+      const characterY = resetY + lineGap;
+      const breakdownY = characterY + clamp(lineGap * 0.85, 12, 18);
+      const totalY = breakdownY + clamp(lineGap * 0.95, 13, 20);
+      const rowsTop = viewer
+        ? resetY + clamp(boxH * 0.085, 20, 34)
+        : totalY + clamp(boxH * 0.055, 16, 28);
+      const statusY = controlsY - clamp(boxH * 0.034, 10, 16);
+      const rowsBottom = statusY - clamp(boxH * 0.04, 12, 18);
+      const rowH = clamp((rowsBottom - rowsTop) / LEADERBOARD_LIMIT, mobilePanel ? 18 : 14, mobilePanel ? 36 : 33);
 
       board.inputRect = viewer ? null : { x: inputX, y: controlsY, w: inputW, h: inputH };
       board.submitRect = viewer || board.submitted ? null : { x: submitX, y: controlsY, w: buttonW, h: buttonH };
@@ -3468,17 +3494,17 @@
       ctx.textAlign = "center";
       ctx.fillStyle = "#9cff6d";
       const title = leaderboardTitle(viewer, boardMode);
-      fitMonoFont(title, 28, 18, boxW - pad * 2);
-      ctx.fillText(title, panelCenterX, y + pad + 24);
+      fitMonoFont(title, clamp(boxW * 0.065, 18, 28), 12, boxW - pad * 2);
+      ctx.fillText(title, panelCenterX, titleY);
       ctx.fillStyle = "rgba(217, 255, 208, 0.76)";
       const boardDateLabel = displayBoardDate(board.dateKey || todayBoardKey(boardMode));
       const dateLine = `UTC ${boardDateLabel}`;
-      fitMonoFont(dateLine, 14, 9, boxW - pad * 2);
-      ctx.fillText(dateLine, panelCenterX, y + pad + 48);
+      fitMonoFont(dateLine, clamp(boxW * 0.038, 10, 14), 8, boxW - pad * 2);
+      ctx.fillText(dateLine, panelCenterX, dateY);
       ctx.fillStyle = "#ffc857";
       const resetText = `RESETS IN ${leaderboardResetCountdown()}`;
-      fitMonoFont(resetText, 16, 9, boxW - pad * 2);
-      ctx.fillText(resetText, panelCenterX, y + pad + 70);
+      fitMonoFont(resetText, clamp(boxW * 0.044, 11, 16), 8, boxW - pad * 2);
+      ctx.fillText(resetText, panelCenterX, resetY);
 
       if (!viewer) {
         const character = characters[state.selectedCharacter] || characters[0];
@@ -3486,14 +3512,14 @@
         const breakdownLine = `DISTANCE +${distanceScore()}   CAPS +${capScore()}`;
         const totalLine = `TOTAL ${Math.max(0, Math.floor(state.score))}`;
         ctx.fillStyle = "rgba(217, 255, 208, 0.82)";
-        fitMonoFont(characterLine, 13, 8, boxW - pad * 2);
-        ctx.fillText(characterLine, panelCenterX, y + pad + 91);
+        fitMonoFont(characterLine, clamp(boxW * 0.034, 9, 13), 7, boxW - pad * 2);
+        ctx.fillText(characterLine, panelCenterX, characterY);
         ctx.fillStyle = "#d9ffd0";
-        fitMonoFont(breakdownLine, 14, 8, boxW - pad * 2);
-        ctx.fillText(breakdownLine, panelCenterX, y + pad + 108);
+        fitMonoFont(breakdownLine, clamp(boxW * 0.039, 10, 14), 7, boxW - pad * 2);
+        ctx.fillText(breakdownLine, panelCenterX, breakdownY);
         ctx.fillStyle = "#ffc857";
-        fitMonoFont(totalLine, 16, 9, boxW - pad * 2);
-        ctx.fillText(totalLine, panelCenterX, y + pad + 126);
+        fitMonoFont(totalLine, clamp(boxW * 0.047, 12, 16), 8, boxW - pad * 2);
+        ctx.fillText(totalLine, panelCenterX, totalY);
       }
 
       ctx.textAlign = "left";
@@ -3513,9 +3539,10 @@
       }
 
       const status = board.loading ? "Loading..." : board.status;
-      ctx.fillStyle = status.includes("Firebase") || status.includes("unavailable") || status.includes("failed") ? "#ffc857" : "rgba(217, 255, 208, 0.78)";
+      const statusKey = status.toLowerCase();
+      ctx.fillStyle = statusKey.includes("firebase") || statusKey.includes("unavailable") || statusKey.includes("failed") ? "#ffc857" : "rgba(217, 255, 208, 0.78)";
       ctx.textAlign = "center";
-      fitMonoFont(status, 12, 8, boxW - pad * 2);
+      fitMonoFont(status, clamp(boxW * 0.034, 9, 12), 7, boxW - pad * 2);
       ctx.fillText(status, panelCenterX, statusY);
 
       ctx.textAlign = "center";
