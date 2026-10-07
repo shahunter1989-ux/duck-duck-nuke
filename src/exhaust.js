@@ -1,44 +1,43 @@
 // Engine coordinates are fractions of the unscaled sprite (top-left origin).
-// Painted exhaust is isolated only at runtime; source artwork stays untouched.
-const painted = (x, y, box, color = '#ffad4f') => ({ x, y, box, color, kind: 'painted' });
+// Polished sprites contain no baked flame; each nozzle gets independent live exhaust.
 const jet = (x, y, color = '#ffad4f', size = 1) => ({ x, y, color, size, kind: 'jet' });
 export const ENGINES = {
   jag: [jet(.065,.75,'#ff8dc9',1.1)],
-  painter: [painted(.32,.84,[0,.72,.32,1],'#ffc464')],
-  bigzx: [painted(.15,.76,[0,.59,.15,.94])],
-  wyldwolf: [painted(.20,.61,[0,.42,.20,.80])],
+  painter: [jet(.284,.78,'#ffc464',.45),jet(.306,.822,'#ffc464',.5),jet(.291,.867,'#ffc464',.45)],
+  bigzx: [jet(.034,.77,'#ffad4f',1.1)],
+  wyldwolf: [jet(.027,.72,'#ffbf72',1.05)],
   ducky: [],
   amy: [jet(.13,.78)],
-  mayra: [painted(.24,.83,[0,.67,.24,1])],
-  coffee: [{...painted(.22,.54,[0,.38,.22,.67],'#ffb2e4'), downward: .45}],
-  mm777: [painted(.15,.50,[0,.25,.15,.65])],
+  mayra: [jet(.087,.79,'#ff9d62',.95)],
+  coffee: [{...jet(.205,.49,'#ffb2e4',.85), angle: -.22}],
+  mm777: [jet(.043,.575,'#ffad4f',1.1)],
   pettywiselol: [jet(.025,.75,'#d8a0ff',1.15)],
-  youyosong: [painted(.31,.66,[0,.34,.31,1])],
-  coconut: [painted(.28,.79,[0,.55,.28,1],'#c7f77e')],
-  bigndn1988: [painted(.32,.49,[0,.20,.32,.74])],
-  retrochick24: [painted(.23,.86,[0,.68,.23,1])],
-  sharkbite07: [painted(.37,.59,[0,.05,.37,1])],
-  dukequackem: [painted(.18,.72,[0,.53,.18,.95])],
-  quackshot01: [jet(.018,.58,'#78d9ff',.7)],
-  thunderbill02: [painted(.13,.25,[0,.15,.13,.37]),painted(.13,.49,[0,.39,.13,.61])],
-  dustdart03: [jet(.026,.63,'#ffca72',.7)],
-  mallardstorm04: [jet(.035,.45,'#ffcc76',.55),jet(.035,.62,'#ffcc76',.55),jet(.035,.80,'#ffcc76',.55)],
-  eggburner05: [jet(.085,.40,'#ffc167',.65),jet(.085,.55,'#ffc167',.65)],
-  nightbeak06: [jet(.025,.64,'#86baff',.7)],
-  sunfin07: [jet(.055,.53,'#ffbd62',.8)],
-  buzzbill08: [jet(.03,.57,'#ffbc69',.8)],
-  warwaddler09: [jet(.055,.35,'#ffc66e',.6)],
-  novaquack10: [painted(.10,.49,[0,.37,.10,.62],'#d5a0ff'),painted(.12,.79,[.025,.68,.12,.92],'#d5a0ff')],
-  ace01: [painted(.06,.71,[0,.59,.06,.84])],
+  youyosong: [jet(.047,.69,'#ffad4f',.9)],
+  coconut: [jet(.03,.779,'#c7f77e',.95)],
+  bigndn1988: [jet(.072,.51,'#ffad4f',.7)],
+  retrochick24: [jet(.064,.77,'#ffad4f',1)],
+  sharkbite07: [jet(.053,.62,'#ffad4f',1)],
+  dukequackem: [jet(.027,.718,'#ffad4f',1)],
+  quackshot01: [jet(.018,.70,'#78d9ff',.7)],
+  thunderbill02: [jet(.033,.395,'#ffad4f',.75),jet(.022,.65,'#ffad4f',.75)],
+  dustdart03: [jet(.031,.66,'#ffca72',.7)],
+  mallardstorm04: [jet(.03,.51,'#ffcc76',.4),jet(.06,.535,'#ffcc76',.4),jet(.03,.65,'#ffcc76',.4),jet(.059,.672,'#ffcc76',.4),jet(.03,.795,'#ffcc76',.4)],
+  eggburner05: [jet(.027,.438,'#ffc167',.65),jet(.026,.59,'#ffc167',.65)],
+  nightbeak06: [jet(.02,.712,'#86baff',.7)],
+  sunfin07: [jet(.024,.508,'#ffbd62',.8)],
+  buzzbill08: [jet(.026,.568,'#ffbc69',.8)],
+  warwaddler09: [jet(.058,.347,'#ffc66e',.65)],
+  novaquack10: [jet(.043,.47,'#d5a0ff',.7),jet(.054,.725,'#d5a0ff',.7)],
+  ace01: [jet(.053,.684,'#ffad4f',.7)],
   barkhawk02: [],
-  spark03: [painted(.065,.45,[0,.37,.065,.52],'#94e6ff'),painted(.065,.70,[0,.62,.065,.80],'#94e6ff')],
-  copilot04: [painted(.06,.38,[0,.25,.06,.50],'#94e6ff'),painted(.06,.61,[0,.53,.06,.73],'#94e6ff')],
-  howler05: [painted(.075,.64,[0,.45,.075,.80],'#be9bff')],
-  rocket06: [painted(.12,.51,[0,.28,.12,.78])],
-  astro07: [painted(.06,.50,[0,.39,.06,.64],'#94e6ff')],
-  scrappy08: [painted(.10,.48,[0,.25,.10,.67])],
-  peanut09: [painted(.15,.61,[0,.35,.15,.90],'#ffc5df')],
-  nitro10: [painted(.13,.67,[0,.51,.13,.84])],
+  spark03: [jet(.018,.60,'#94e6ff',.8)],
+  copilot04: [jet(.02,.646,'#94e6ff',.75)],
+  howler05: [jet(.035,.682,'#be9bff',.8)],
+  rocket06: [jet(.055,.597,'#ffad4f',.85)],
+  astro07: [jet(.016,.592,'#94e6ff',.8)],
+  scrappy08: [jet(.023,.601,'#ffad4f',.75)],
+  peanut09: [jet(.02,.61,'#ffc5df',.8)],
+  nitro10: [jet(.075,.708,'#ffad4f',.75)],
 };
 
 export function exhaustState(time, power, motion = true, seed = 0) {
@@ -98,7 +97,7 @@ export class ExhaustRenderer {
   }
   jet(ctx,x,y,time,state,power,engine,motion) {
     const size=engine.size||1,length=(14+power*20)*state.stretch*size,radius=(3+power*1.3)*size;
-    ctx.save();ctx.translate(x,y);
+    ctx.save();ctx.translate(x,y);ctx.rotate(engine.angle||0);
     const glow=ctx.createRadialGradient(-length*.3,0,0,-length*.3,0,length*.8);
     glow.addColorStop(0,engine.color+'55');glow.addColorStop(1,engine.color+'00');
     ctx.fillStyle=glow;ctx.fillRect(-length*1.2,-length*.8,length*1.6,length*1.6);
@@ -116,7 +115,7 @@ export class ExhaustRenderer {
       const age=((time*(1.5+power*.5)+i/3+index*.13)%1+1)%1;
       ctx.globalAlpha=(1-age)*(.18+power*.28);
       const dx=age*(22+power*30),dy=Math.sin(i*9+index)*age*(4+power*4);
-      ctx.beginPath();ctx.arc(x-dx,y+dy,.55*(1-age)+.2,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(x-dx*Math.cos(engine.angle||0)-dy*Math.sin(engine.angle||0),y-dx*Math.sin(engine.angle||0)+dy*Math.cos(engine.angle||0),.55*(1-age)+.2,0,Math.PI*2);ctx.fill();
     }
     ctx.restore();
   }
