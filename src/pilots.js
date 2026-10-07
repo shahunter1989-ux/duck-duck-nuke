@@ -12,6 +12,12 @@ export const PILOTS = [
     group: "crew",
   },
   {
+    id: "jag",
+    name: "JAG",
+    asset: "jag",
+    group: "crew",
+  },
+  {
     id: "wyldwolf",
     name: "WyldWolf",
     asset: "wyldwolf",
@@ -48,12 +54,6 @@ export const PILOTS = [
     group: "crew",
   },
   {
-    id: "rocco",
-    name: "Rocco",
-    asset: "rocco",
-    group: "crew",
-  },
-  {
     id: "pettywiselol",
     name: "PettyWiselol",
     asset: "pettywiselol",
@@ -81,12 +81,6 @@ export const PILOTS = [
     id: "retrochick24",
     name: "RetroChick24",
     asset: "retrochick24",
-    group: "crew",
-  },
-  {
-    id: "docholiday",
-    name: "Doc Holiday",
-    asset: "doc-holiday",
     group: "crew",
   },
   {

@@ -11,9 +11,9 @@ import { loadSave, writeSave } from "../src/storage.js";
 import { boardKey, cleanCallsign } from "../src/leaderboard.js";
 import { PILOTS } from "../src/pilots.js";
 import { existsSync } from "node:fs";
-test("all original pilots have shipping art and unique identities", () => {
-  assert.equal(PILOTS.length, 37);
-  assert.equal(new Set(PILOTS.map((p) => p.id)).size, 37);
+test("all available pilots have shipping art and unique identities", () => {
+  assert.equal(PILOTS.length, 36);
+  assert.equal(new Set(PILOTS.map((p) => p.id)).size, 36);
   for (const p of PILOTS)
     assert.ok(existsSync(`assets/optimized/${p.asset}.webp`), p.asset);
 });

@@ -164,7 +164,7 @@ small {
   background:
     linear-gradient(90deg, #161d19 3%, #161d19ed 26%, #161d19a0 58%, #161d1960),
     linear-gradient(0deg, #161d19 0%, transparent 65%),
-    url("../assets/optimized/wulfzx-underground-background.webp") center 54% /
+    url("../assets/worlds/cinder-junction.webp") center 54% /
       cover;
 }
 .hangar:after {
@@ -1422,3 +1422,17 @@ input[type="checkbox"] {
     display: none;
   }
 }
+
+.atlas-open { margin-top:16px; }
+.world-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.world-card { text-align:left; padding:0 0 20px; overflow:hidden; background:#202b25; border:1px solid #53604c; color:#f4eedb; cursor:pointer; }
+.world-card img { width:100%; aspect-ratio:1.8; object-fit:cover; display:block; margin-bottom:16px; }
+.world-card strong,.world-card span,.world-card small { display:block; margin:8px 18px; }
+.world-card strong { font-size:24px; }
+.world-card span { color:#c3cbb8; }
+.world-card small { color:#e4b96c; }
+.world-card:hover { border-color:#e4b96c; }
+.tour-controls { display:flex; gap:12px; align-items:center; justify-content:center; padding:14px 0; flex-wrap:wrap; }
+.tour-controls span { font-size:11px; letter-spacing:1px; color:#c3cbb8; }
+[hidden] { display:none !important; }
+@media(max-width:600px) { .world-grid { grid-template-columns:1fr; } .tour-controls { gap:8px; } .game-toolbar #flight-mode { max-width:48%; font-size:10px; text-align:center; } }

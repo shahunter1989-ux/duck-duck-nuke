@@ -16,7 +16,7 @@
     <link
       rel="preload"
       as="image"
-      href="./assets/optimized/wulfzx-underground-background.webp"
+      href="./assets/worlds/cinder-junction.webp"
     />
     <link rel="stylesheet" href="./src/style.css" />
   </head>
@@ -70,6 +70,7 @@
                 HOW TO PLAY <span>↗</span>
               </button>
             </div>
+            <button class="text-button atlas-open" id="atlas-open">EXPLORE THE WASTELAND</button>
             <div class="record-strip">
               <div>
                 <span>PERSONAL BEST</span><strong id="home-best">000</strong>
@@ -162,7 +163,7 @@
         >
           <div class="game-toolbar">
             <button class="text-button" id="exit-flight">← HANGAR</button
-            ><span id="flight-mode">ROOKIE / SECTOR 01</span
+            ><span id="flight-mode">ROOKIE / CINDER JUNCTION</span
             ><button class="icon-button" id="pause">PAUSE <kbd>P</kbd></button>
           </div>
           <div class="game-frame" id="game-frame">
@@ -200,9 +201,10 @@
             ></div>
             <div class="flight-progress">
               <span id="distance">0 m</span
-              ><span id="streak">WASTELAND / SECTOR 01</span>
+              ><span id="streak">THE ASHLINE</span>
             </div>
           </div>
+          <div id="tour-controls" class="tour-controls" hidden><span>SCENIC FLIGHT - NO SCORE</span><button class="secondary" id="tour-pilot">CHANGE PILOT</button><button class="secondary" id="tour-next">NEXT LOCATION</button></div>
           <div class="flight-bottom">
             <span
               ><kbd>SPACE</kbd> / <kbd>↑</kbd> BOOST <i>·</i> <kbd>P</kbd> PAUSE
@@ -217,6 +219,7 @@
         ><span class="footer-signal"><i></i> STAY WILD. FLY LOW.</span>
       </footer>
     </div>
+    <dialog id="atlas-dialog" class="wide-dialog" aria-labelledby="atlas-title"><div class="dialog-heading"><div><p class="eyebrow">FOUR PLACES. ONE WILD FLIGHT.</p><h2 id="atlas-title">THE WASTELAND ATLAS.</h2></div><button class="close" data-close aria-label="Close atlas">X</button></div><p class="muted">A new location every eight gates. Take a scenic flight to explore each one.</p><div id="world-grid" class="world-grid"></div></dialog>
     <dialog
       id="pilots-dialog"
       class="wide-dialog"

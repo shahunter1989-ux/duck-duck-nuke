@@ -1,3 +1,6 @@
+import { WORLDS, worldAt, assetUrl } from "./worlds.js";
+import { pilotVisual } from "./pilot-visuals.js";
+import { LOCAL_PREVIEW } from "./release.js";
 import { PILOTS } from "./pilots.js";
 import { createRun, boost, step, MODES } from "./simulation.js";
 import { loadSave, writeSave } from "./storage.js";
@@ -45,7 +48,7 @@ function syncHome() {
   setText("selected-name", pilot.name);
   setText("hero-pilot-name", pilot.name.toUpperCase());
   for (const id of ["hero-pilot", "selected-avatar"])
-    $(id).src = `./assets/optimized/${pilot.asset}.webp`;
+    $(id).src = assetUrl(pilotVisual(pilot).art);
   document.querySelectorAll("[data-mode]").forEach((b) => {
     const active = b.dataset.mode === save.mode;
     b.classList.toggle("selected", active);
@@ -124,6 +127,8 @@ function launch() {
   $("flight-deck").hidden = true;
   $("play-screen").hidden = false;
   $("ready-overlay").hidden = false;
+  $("hud").hidden = false;
+  $("tour-controls").hidden = true;
   renderer ??= new Renderer($("game"));
   renderer.resize();
   renderer.reset();
@@ -138,11 +143,12 @@ function launch() {
 function thrust() {
   if (screen !== "flight" || document.querySelector("dialog[open]")) return;
   sound.unlock();
+  if (run.phase === "tour") { renderer.pilotRenderer.boost(); sound.play("boost"); return; }
   if (boost(run)) $("ready-overlay").hidden = true;
   consumeEvents();
 }
 function pause() {
-  if (run.phase !== "running" && run.phase !== "ready") return;
+  if (run.phase !== "running" && run.phase !== "ready" && run.phase !== "tour") return;
   run.resumePhase = run.phase;
   run.phase = "paused";
   openDialog("pause-dialog");
@@ -210,17 +216,9 @@ function syncHud() {
   setText("caps", String(run.caps).padStart(2, "0"));
   setText("distance", `${Math.floor(run.distance)} m`);
   setText("flight-best", `BEST ${padded(save.best[run.mode])}`);
-  const sector = Math.floor(run.gates / 8) + 1;
-  setText(
-    "flight-mode",
-    `${MODES[run.mode].name} / SECTOR ${String(sector).padStart(2, "0")}`,
-  );
-  setText(
-    "streak",
-    run.streak > 1
-      ? `${run.streak} CAP STREAK`
-      : `WASTELAND / SECTOR ${String(sector).padStart(2, "0")}`,
-  );
+  const location = worldAt(run.gates), sector = location.stage + 1;
+  setText("flight-mode", `${run.phase === 'tour' || run.resumePhase === 'tour' && run.phase === 'paused' ? 'SCENIC FLIGHT' : MODES[run.mode].name} / ${location.name.toUpperCase()}`);
+  setText("streak", run.streak > 1 ? `${run.streak} CAP STREAK` : location.terrain);
   const fuel = Math.round(run.player.charge * 100);
   setText(
     "fuel-label",
@@ -232,7 +230,7 @@ function syncHud() {
     lastGateSector = sector - 1;
     setText(
       "sector-toast",
-      `SECTOR ${String(sector).padStart(2, "0")} / KEEP FLYING`,
+      `${location.name.toUpperCase()} - ${location.subtitle}`,
     );
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => setText("sector-toast", ""), 2200);
@@ -251,6 +249,7 @@ function loop(now) {
         consumeEvents();
       }
     } else accumulator = 0;
+    if (run.phase === "tour") { run.player.y = 310 + (renderer.motion ? Math.sin(ambient * 1.5) * 16 : 0); run.player.vy = renderer.motion ? Math.cos(ambient * 1.5) * 24 : 0; }
     renderer.draw(run, pilot, dt, ambient);
     syncHud();
   }
@@ -270,7 +269,7 @@ function renderPilots() {
     button.setAttribute("aria-pressed", String(item.id === pilot.id));
     button.setAttribute("aria-label", `Select ${item.name}`);
     const img = document.createElement("img");
-    img.src = `./assets/optimized/${item.asset}.webp`;
+    img.src = assetUrl(pilotVisual(item).art);
     img.alt = "";
     img.loading = "lazy";
     img.width = 140;
@@ -297,6 +296,7 @@ function renderPilots() {
   }
 }
 async function loadBoard() {
+  if (LOCAL_PREVIEW) { $("score-form").hidden = true; setText("board-status", "Local preview. Public score posting is disabled; personal records stay on this device."); setText("board-reset", "LOCAL FLIGHT LOG"); return; }
   const request = ++boardRequest;
   document
     .querySelectorAll("[data-board-mode]")
@@ -443,7 +443,7 @@ $("motion-setting").addEventListener("change", (e) => {
 });
 mediaMotion.addEventListener("change", syncSettings);
 $("settings-open").addEventListener("click", () => {
-  if (screen === "flight" && ["running", "ready"].includes(run.phase)) {
+  if (screen === "flight" && ["running", "ready", "tour"].includes(run.phase)) {
     run.resumePhase = run.phase;
     run.phase = "paused";
   }
@@ -533,3 +533,21 @@ window.addEventListener("blur", autoPause);
 syncHome();
 syncSettings();
 requestAnimationFrame(loop);
+
+function tour(index) {
+  launch(); run.phase = 'tour'; run.gates = index * 8; run.obstacles = [];
+  $("ready-overlay").hidden = true; $("hud").hidden = true;
+  $("tour-controls").hidden = false; syncHud();
+}
+$("atlas-open").addEventListener('click', () => openDialog('atlas-dialog'));
+for (const [index, world] of WORLDS.entries()) {
+  const card = document.createElement('button'); card.className = 'world-card';
+  const image = document.createElement('img'); image.src = assetUrl(world.asset); image.alt = ''; image.loading = 'lazy';
+  const name = document.createElement('strong'); name.textContent = world.name;
+  const description = document.createElement('span'); description.textContent = world.subtitle;
+  const action = document.createElement('small'); action.textContent = 'PREVIEW LOCATION';
+  card.append(image, name, description, action); card.addEventListener('click', () => tour(index));
+  $("world-grid").append(card);
+}
+$("tour-next").addEventListener('click', () => { run.gates = ((worldAt(run.gates).index + 1) % WORLDS.length) * 8; lastGateSector = -1; });
+$("tour-pilot").addEventListener('click', () => { renderPilots(); openDialog('pilots-dialog'); });

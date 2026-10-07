@@ -1,4 +1,6 @@
 import { WORLD, clamp } from "./simulation.js";
+import { WorldRenderer } from "./world-renderer.js";
+import { PilotRenderer } from "./pilot-renderer.js";
 const asset = (name) =>
   new URL(`../assets/optimized/${name}.webp`, import.meta.url).href;
 export class Renderer {
@@ -10,25 +12,8 @@ export class Renderer {
     this.labels = [];
     this.shake = 0;
     this.motion = true;
-    this.lastSector = 0;
-    this.previousSector = 0;
-    this.transition = 0;
-    this.backgrounds = [
-      "wulfzx-underground-background",
-      "wulfzx-golden-hour-background",
-      "wulfzx-nightfall-background",
-      "wulfzx-snow-background",
-      "wulfzx-green-storm-background",
-      "wulfzx-vault-day-background",
-      "wulfzx-moon-background",
-      "wulfzx-storm-background",
-      "wulfzx-bright-day-background",
-      "wulfzx-sunset-background",
-      "wulfzx-wcx-day-background",
-      "wulfzx-autumn-background",
-      "wulfzx-dust-storm-background",
-    ];
-    this.load(this.backgrounds[0]);
+    this.worlds = new WorldRenderer();
+    this.pilotRenderer = new PilotRenderer();
     this.load("wzx-radiation-barrel");
     this.load("wzx-tnt-barrel");
     this.load("wzx-red-cap");
@@ -65,8 +50,7 @@ export class Renderer {
       this.particles.splice(0, this.particles.length - 160);
   }
   event(e, run) {
-    if (e.type === "boost")
-      this.burst(run.player.x - 25, run.player.y + 12, "#ff9c45", 9);
+    if (e.type === "boost") this.pilotRenderer.boost();
     if (e.type === "cap") {
       this.burst(e.x, e.y, "#e8ed9c", 15);
       this.labels.push({
@@ -92,9 +76,8 @@ export class Renderer {
     this.particles = [];
     this.labels = [];
     this.shake = 0;
-    this.lastSector = 0;
-    this.previousSector = 0;
-    this.transition = 0;
+    this.worlds.reset();
+    this.pilotRenderer.reset();
   }
   draw(run, pilot, dt, ambient) {
     const ctx = this.ctx,
@@ -112,44 +95,7 @@ export class Renderer {
         ? -(run.player.x - visibleW * 0.23)
         : (visibleW - WORLD.width) / 2;
     ctx.scale(scale, scale);
-    const sector = Math.floor(run.gates / 8) % this.backgrounds.length;
-    const bg = this.load(this.backgrounds[sector]);
-    this.load(this.backgrounds[(sector + 1) % this.backgrounds.length]);
-    const fallback = this.images.get(this.backgrounds[0]);
-    if (sector !== this.lastSector && bg.complete && bg.naturalWidth) {
-      this.previousSector = this.lastSector;
-      this.lastSector = sector;
-      this.transition = this.motion ? 1.4 : 0;
-    }
-    if (this.transition > 0) {
-      this.cover(
-        this.images.get(this.backgrounds[this.previousSector]),
-        0,
-        0,
-        visibleW,
-        WORLD.height,
-      );
-      ctx.globalAlpha = 1 - this.transition / 1.4;
-      if (run.phase !== "paused")
-        this.transition = Math.max(0, this.transition - dt);
-    }
-    this.cover(
-      bg.complete && bg.naturalWidth ? bg : fallback,
-      0,
-      0,
-      visibleW,
-      WORLD.height,
-    );
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = "#111c193d";
-    ctx.fillRect(0, 0, visibleW, WORLD.height);
-    const shade = ctx.createLinearGradient(0, 0, 0, WORLD.height);
-    shade.addColorStop(0, "#07120dc0");
-    shade.addColorStop(0.22, "#07120d00");
-    shade.addColorStop(0.8, "#07120d00");
-    shade.addColorStop(1, "#07120dc0");
-    ctx.fillStyle = shade;
-    ctx.fillRect(0, 0, visibleW, WORLD.height);
+    this.worlds.draw(ctx, visibleW, run, dt, ambient, this.motion);
     ctx.save();
     ctx.translate(offsetX, 0);
     if (this.motion && this.shake > 0)
@@ -157,15 +103,6 @@ export class Renderer {
         (Math.random() - 0.5) * this.shake * 22,
         (Math.random() - 0.5) * this.shake * 22,
       );
-    if (this.motion) {
-      ctx.fillStyle = "#f2ecb64d";
-      for (let i = 0; i < 24; i++) {
-        const x =
-          (((i * 137 - ambient * (10 + (i % 4) * 8)) % 1100) + 1100) % 1100;
-        const y = 95 + ((i * 73) % 480);
-        ctx.fillRect(x, y, (i % 3) + 1, 1);
-      }
-    }
     for (const o of run.obstacles) {
       const top = o.center - o.gap / 2,
         bottom = o.center + o.gap / 2;
@@ -203,43 +140,7 @@ export class Renderer {
         ctx.restore();
       }
     }
-    const p = run.player,
-      sprite = this.load(pilot.asset);
-    ctx.save();
-    ctx.translate(
-      p.x,
-      p.y +
-        (run.phase === "ready" && this.motion ? Math.sin(ambient * 2) * 5 : 0),
-    );
-    ctx.rotate(run.phase === "ready" ? -0.08 : clamp(p.vy / 850, -0.32, 0.58));
-    if (run.phase === "running" && p.vy < 50) {
-      const flame = 19 + (this.motion ? Math.random() * 17 : 6);
-      ctx.fillStyle = "#ff7136";
-      ctx.beginPath();
-      ctx.moveTo(-23, 6);
-      ctx.lineTo(-30 - flame, 14);
-      ctx.lineTo(-23, 20);
-      ctx.fill();
-      ctx.fillStyle = "#ffe79c";
-      ctx.beginPath();
-      ctx.moveTo(-23, 9);
-      ctx.lineTo(-32 - flame * 0.5, 14);
-      ctx.lineTo(-23, 17);
-      ctx.fill();
-    }
-    if (sprite.complete && sprite.naturalWidth)
-      this.contain(sprite, -40, -34, 80, 68);
-    else {
-      ctx.fillStyle = "#f2d169";
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 25, 19, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#ff6738";
-      ctx.fillRect(19, -7, 15, 7);
-      ctx.fillStyle = "#18251b";
-      ctx.fillRect(13, -12, 4, 4);
-    }
-    ctx.restore();
+    this.pilotRenderer.draw(ctx, run, pilot, dt, ambient, this.motion);
     for (const particle of this.particles) {
       if (run.phase !== "paused") {
         particle.x += particle.vx * dt;
