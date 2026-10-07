@@ -2,6 +2,21 @@
 // Polished sprites contain no baked flame; each nozzle gets independent live exhaust.
 const jet = (x, y, color = '#ffad4f', size = 1) => ({ x, y, color, size, kind: 'jet' });
 export const ENGINES = {
+  'count-quackula': [jet(.075,.57,'#ff6585',1)],
+  patchwick: [jet(.025,.63,'#ffb452',1)],
+  'hex-hazel': [jet(.035,.60,'#ce8aff',1)],
+  mothlight: [jet(.025,.65,'#ffc36e',1)],
+  'grim-waddler': [jet(.02,.60,'#a5ffd0',1)],
+  quackzar: [jet(.035,.54,'#ffbd75',.65),jet(.08,.67,'#ffbd75',.7)],
+  'ziggy-zorb': [jet(.09,.34,'#aaff99',.6),jet(.04,.56,'#aaff99',.7),jet(.1,.75,'#aaff99',.5)],
+  'princess-nebula': [jet(.045,.46,'#d8a0ff',.65),jet(.04,.66,'#d8a0ff',.65)],
+  gloop: [jet(.055,.49,'#81eaff',.7),jet(.055,.72,'#81eaff',.7)],
+  'granny-galaxy': [jet(.045,.4,'#ffd08b',.7),jet(.045,.66,'#ffd08b',.7)],
+  'bork-9000': [jet(.09,.5,'#79c9ff',.65),jet(.08,.7,'#79c9ff',.65)],
+  'dj-moonbeam': [jet(.045,.42,'#fc85ec',.6),jet(.035,.64,'#80ffff',.65),jet(.13,.79,'#fc85ec',.45)],
+  'nibbles-invader': [jet(.055,.38,'#b5ffd4',.6),jet(.05,.59,'#b5ffd4',.65)],
+  'sheriff-starbeak': [jet(.02,.45,'#ffd577',.65),jet(.02,.63,'#ffd577',.65)],
+  'oopsy-orbit': [jet(.035,.62,'#a0ffec',.95)],
   jag: [jet(.065,.75,'#ff8dc9',1.1)],
   painter: [jet(.284,.78,'#ffc464',.45),jet(.306,.822,'#ffc464',.5),jet(.291,.867,'#ffc464',.45)],
   bigzx: [jet(.034,.77,'#ffad4f',1.1)],

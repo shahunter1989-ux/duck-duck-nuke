@@ -28,6 +28,11 @@ export function pilotVisual(pilot) {
     visual.art = `polished/${pilot.id}-v2.webp`;
     visual.propulsion = pilot.id === 'barkhawk02' ? 'propeller' : 'clean';
   }
+  if (pilot.group === 'alien' || pilot.group === 'halloween') {
+    visual.width = 104;
+    visual.height = 82;
+    visual.propulsion = 'clean';
+  }
   return visual;
 }
 export function animationFrame(time, boosted = false) {
