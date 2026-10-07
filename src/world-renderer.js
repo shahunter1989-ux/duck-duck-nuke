@@ -39,6 +39,16 @@ export class WorldRenderer {
     ctx.fillStyle = shade; ctx.fillRect(0, 0, width, WORLD.height);
   }
   atmosphere(ctx, width, world, time) {
+    if (world.weather === 'stars') {
+      ctx.save(); const opacity = ctx.globalAlpha;
+      ctx.fillStyle = world.accent;
+      for (let i = 0; i < 32; i++) {
+        ctx.globalAlpha = opacity * (.16 + (Math.sin(time * 1.2 + i * 2.3) + 1) * .13);
+        const x = wrap(i * 137.51 - time * (2 + i % 3), width + 20) - 10;
+        ctx.beginPath(); ctx.arc(x, (i * 83.17) % 540, .6 + (i % 3) * .3, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore(); return;
+    }
     ctx.save();
     const opacity = ctx.globalAlpha;
     const period = width + 100;
@@ -73,6 +83,7 @@ export class WorldRenderer {
     ctx.restore();
   }
   foreground(ctx, width, world, time) {
+    if (world.weather === 'stars') return;
     ctx.save(); const opacity = ctx.globalAlpha; ctx.fillStyle = world.shadow;
     // Two bounded layers move at different speeds; decoration never enters a gate.
     for (let layer = 0; layer < 2; layer++) {

@@ -215,4 +215,21 @@ export const PILOTS = [
     asset: "nitro-10",
     group: "squad",
   },
+
+  {"id": "quackzar", "name": "Captain Quackzar", "asset": "quackzar", "group": "alien"},
+  {"id": "ziggy-zorb", "name": "Ziggy Zorb", "asset": "ziggy-zorb", "group": "alien"},
+  {"id": "princess-nebula", "name": "Princess Nebula", "asset": "princess-nebula", "group": "alien"},
+  {"id": "gloop", "name": "Gloop", "asset": "gloop", "group": "alien"},
+  {"id": "granny-galaxy", "name": "Granny Galaxy", "asset": "granny-galaxy", "group": "alien"},
+  {"id": "bork-9000", "name": "Bork-9000", "asset": "bork-9000", "group": "alien"},
+  {"id": "dj-moonbeam", "name": "DJ Moonbeam", "asset": "dj-moonbeam", "group": "alien"},
+  {"id": "nibbles-invader", "name": "Nibbles the Invader", "asset": "nibbles-invader", "group": "alien"},
+  {"id": "sheriff-starbeak", "name": "Sheriff Starbeak", "asset": "sheriff-starbeak", "group": "alien"},
+  {"id": "oopsy-orbit", "name": "Oopsy Orbit", "asset": "oopsy-orbit", "group": "alien"},
+
+  {"id": "count-quackula", "name": "Count Quackula", "asset": "count-quackula", "group": "halloween"},
+  {"id": "patchwick", "name": "Patchwick", "asset": "patchwick", "group": "halloween"},
+  {"id": "hex-hazel", "name": "Hex Hazel", "asset": "hex-hazel", "group": "halloween"},
+  {"id": "mothlight", "name": "Mothlight", "asset": "mothlight", "group": "halloween"},
+  {"id": "grim-waddler", "name": "Grim Waddler", "asset": "grim-waddler", "group": "halloween"},
 ];
