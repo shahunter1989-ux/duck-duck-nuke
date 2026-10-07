@@ -1,4 +1,4 @@
-import { WORLD, clamp } from "./simulation.js";
+import { WORLD, clamp, capY } from "./simulation.js";
 import { WorldRenderer } from "./world-renderer.js";
 import { PilotRenderer } from "./pilot-renderer.js";
 const asset = (name) =>
@@ -117,7 +117,7 @@ export class Renderer {
       );
       if (!o.taken) {
         const x = o.x + o.width / 2,
-          y = o.center,
+          y = capY(o, run.time, this.motion),
           pulse = this.motion ? Math.sin(ambient * 3) * 2 : 0;
         ctx.save();
         ctx.shadowColor = "#ffd561";

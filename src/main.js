@@ -1,5 +1,6 @@
 import { WORLDS, worldAt, assetUrl } from "./worlds.js";
 import { pilotVisual } from "./pilot-visuals.js";
+import { PilotPreviews } from './pilot-preview.js';
 import { LOCAL_PREVIEW } from "./release.js";
 import { PILOTS } from "./pilots.js";
 import { createRun, boost, step, MODES } from "./simulation.js";
@@ -33,6 +34,7 @@ let renderer,
   toastTimer,
   lastGateSector = 0;
 const mediaMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const previews = new PilotPreviews();
 function persist() {
   return writeSave(save);
 }
@@ -48,7 +50,7 @@ function syncHome() {
   setText("selected-name", pilot.name);
   setText("hero-pilot-name", pilot.name.toUpperCase());
   for (const id of ["hero-pilot", "selected-avatar"])
-    $(id).src = assetUrl(pilotVisual(pilot).art);
+    previews.attach($(id), pilot);
   document.querySelectorAll("[data-mode]").forEach((b) => {
     const active = b.dataset.mode === save.mode;
     b.classList.toggle("selected", active);
@@ -244,7 +246,7 @@ function loop(now) {
     if (run.phase === "running") {
       accumulator += dt;
       while (accumulator >= 1 / 120) {
-        step(run, 1 / 120);
+        step(run, 1 / 120, renderer.motion);
         accumulator -= 1 / 120;
         consumeEvents();
       }
@@ -253,6 +255,7 @@ function loop(now) {
     renderer.draw(run, pilot, dt, ambient);
     syncHud();
   }
+  previews.draw(now / 1000, save.motion && !mediaMotion.matches);
   requestAnimationFrame(loop);
 }
 function renderPilots() {
@@ -277,6 +280,7 @@ function renderPilots() {
     const name = document.createElement("span");
     name.textContent = item.name;
     button.append(img, name);
+    previews.attach(img, item);
     button.addEventListener("click", () => {
       pilot = item;
       save.pilot = item.id;

@@ -1,9 +1,19 @@
 export const GATES_PER_WORLD = 8;
 export const WORLDS = Object.freeze([
   { id: 'cinder-junction', name: 'Cinder Junction', subtitle: 'Where the last train never left.', terrain: 'THE ASHLINE', weather: 'dust', accent: '#ffba72', shadow: '#372b27', sky: '#6e9294', asset: 'worlds/cinder-junction.webp' },
+  {"id": "pumpkin-hollow", "name": "Pumpkin Hollow", "subtitle": "The lanterns are watching.", "terrain": "PUMPKIN HOLLOW", "weather": "leaves", "accent": "#ffb45a", "shadow": "#352132", "sky": "#704a82", "asset": "worlds/pumpkin-hollow.webp"},
+  {"id": "amberleaf-crossing", "name": "Amberleaf Crossing", "subtitle": "Fall looks good on the wasteland.", "terrain": "AMBERLEAF CROSSING", "weather": "leaves", "accent": "#ffc875", "shadow": "#473326", "sky": "#86abc2", "asset": "worlds/amberleaf-crossing.webp"},
   { id: 'glowfen-marsh', name: 'Glowfen Marsh', subtitle: 'Follow the lights. Not the voices.', terrain: 'THE LOWLANDS', weather: 'fireflies', accent: '#a6f1af', shadow: '#112c2e', sky: '#376b76', asset: 'worlds/glowfen-marsh.webp' },
+  {"id": "witchlight-woods", "name": "Witchlight Woods", "subtitle": "Take the path with fewer whispers.", "terrain": "WITCHLIGHT WOODS", "weather": "fireflies", "accent": "#a3f2a0", "shadow": "#182b30", "sky": "#336b7d", "asset": "worlds/witchlight-woods.webp"},
+  {"id": "cider-mill-creek", "name": "Cider Mill Creek", "subtitle": "A little cider. A little chaos.", "terrain": "CIDER MILL CREEK", "weather": "leaves", "accent": "#edac60", "shadow": "#493a2b", "sky": "#b6b8a0", "asset": "worlds/cider-mill-creek.webp"},
+  {"id": "ghostlight-midway", "name": "Ghostlight Midway", "subtitle": "All rides are a little haunted.", "terrain": "GHOSTLIGHT MIDWAY", "weather": "fireflies", "accent": "#e9afdf", "shadow": "#302438", "sky": "#785a9c", "asset": "worlds/ghostlight-midway.webp"},
   { id: 'frostbite-relay', name: 'Frostbite Relay', subtitle: 'A lost signal at the edge of winter.', terrain: 'THE NORTH REACH', weather: 'snow', accent: '#a7def6', shadow: '#26304b', sky: '#1d2e58', asset: 'worlds/frostbite-relay.webp' },
+  {"id": "crooked-snow-village", "name": "Crooked Snow Village", "subtitle": "Spooky meets snow day.", "terrain": "CROOKED SNOW VILLAGE", "weather": "snow", "accent": "#dbbafa", "shadow": "#242a49", "sky": "#283f71", "asset": "worlds/crooked-snow-village.webp"},
+  {"id": "moonbone-manor", "name": "Moonbone Manor", "subtitle": "The house has a few guests.", "terrain": "MOONBONE MANOR", "weather": "fireflies", "accent": "#a7dfff", "shadow": "#202c45", "sky": "#304977", "asset": "worlds/moonbone-manor.webp"},
+  {"id": "harvest-moon-fields", "name": "Harvest Moon Fields", "subtitle": "One more flight before supper.", "terrain": "HARVEST MOON FIELDS", "weather": "leaves", "accent": "#ffb774", "shadow": "#4f3040", "sky": "#ac6384", "asset": "worlds/harvest-moon-fields.webp"},
   { id: 'neon-spillway', name: 'Neon Spillway', subtitle: 'The power is out. The city isn’t.', terrain: 'THE AFTERLIGHT', weather: 'rain', accent: '#e9a1df', shadow: '#201d34', sky: '#25223c', asset: 'worlds/neon-spillway.webp' },
+  {"id": "candy-corn-canyon", "name": "Candy Corn Canyon", "subtitle": "Sweet scenery. Questionable shortcuts.", "terrain": "CANDY CORN CANYON", "weather": "dust", "accent": "#ffc875", "shadow": "#5d342e", "sky": "#d38981", "asset": "worlds/candy-corn-canyon.webp"},
+  {"id": "gobble-gulch", "name": "Gobble Gulch", "subtitle": "Please do not feed the mayor.", "terrain": "GOBBLE GULCH", "weather": "leaves", "accent": "#ffbf69", "shadow": "#553c28", "sky": "#e9ae64", "asset": "worlds/gobble-gulch.webp"},
 ]);
 export function worldAt(gates = 0) {
   gates = Number.isFinite(gates) ? Math.max(0, gates) : 0;
