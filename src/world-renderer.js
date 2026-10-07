@@ -56,7 +56,14 @@ export class WorldRenderer {
       const seed = i * 137.51, z = .4 + (i % 5) / 5;
       const x = wrap(seed - time * (world.weather === 'rain' ? 58 : 10) * z, period) - 50;
       const y = wrap(i * 83.17 + time * (world.weather === 'rain' ? 310 : world.weather === 'snow' ? 27 : -5) * z, 600);
-      if (world.weather === 'rain') { ctx.strokeStyle = '#b9cae1'; ctx.globalAlpha = opacity * (.10 + z * .09); ctx.lineWidth = .7; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-4,y+15*z); ctx.stroke(); }
+      if (world.weather === 'leaves') {
+        ctx.save(); ctx.globalAlpha = opacity * .55;
+        ctx.translate(x + Math.sin(time * .7 + i) * 20, wrap(i * 83.17 + time * 20 * z, 620));
+        ctx.rotate(time * .7 + i); ctx.fillStyle = ['#df793e', '#e9b654', '#b75635'][i % 3];
+        ctx.beginPath(); ctx.ellipse(0, 0, 4 * z, 2 * z, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+      else if (world.weather === 'rain') { ctx.strokeStyle = '#b9cae1'; ctx.globalAlpha = opacity * (.10 + z * .09); ctx.lineWidth = .7; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-4,y+15*z); ctx.stroke(); }
       else { ctx.fillStyle = world.weather === 'snow' ? '#e2f1ff' : world.accent; ctx.globalAlpha = opacity * (world.weather === 'fireflies' ? .25 + (Math.sin(time*1.6+i)+1)*.2 : .25); ctx.beginPath(); ctx.arc(x + Math.sin(time*.6+i)*8, world.weather === 'fireflies' ? 340+y*.4 : y, world.weather === 'fireflies' ? 1.6 : z*1.9, 0, Math.PI*2); ctx.fill(); }
     }
     if (world.weather === 'rain' || world.weather === 'fireflies') {

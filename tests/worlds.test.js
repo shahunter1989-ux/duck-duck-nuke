@@ -8,10 +8,17 @@ import { readBoard, postScore } from '../src/leaderboard.js';
 import { PilotRenderer } from '../src/pilot-renderer.js';
 test('locations change every eight gates and repeat after a complete route', () => {
   assert.equal(worldAt(7).name, 'Cinder Junction');
-  assert.equal(worldAt(8).name, 'Glowfen Marsh');
-  assert.equal(worldAt(16).name, 'Frostbite Relay');
-  assert.equal(worldAt(24).name, 'Neon Spillway');
-  assert.equal(worldAt(32).lap, 2);
+  assert.equal(WORLDS.length, 14);
+  assert.equal(worldAt(8).name, 'Pumpkin Hollow');
+  assert.equal(worldAt(16).name, 'Amberleaf Crossing');
+  assert.equal(worldAt(24).name, 'Glowfen Marsh');
+  assert.equal(new Set(WORLDS.map(w => w.id)).size, 14);
+  for (let i = 0; i < WORLDS.length; i++) {
+    assert.equal(worldAt(i * 8).id, WORLDS[i].id);
+    assert.equal(worldAt(i * 8 + 7).id, WORLDS[i].id);
+  }
+  assert.equal(worldAt(112).lap, 2);
+  assert.equal(worldAt(112).id, WORLDS[0].id);
   for (const input of [-1,NaN,Infinity]) assert.equal(worldAt(input).index,0);
 });
 test('all 36 pilots, animation frames, and world artwork ship locally', () => {

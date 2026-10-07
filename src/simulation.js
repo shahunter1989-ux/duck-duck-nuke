@@ -75,7 +75,10 @@ export function circleRect(x, y, r, rx, ry, w, h) {
     (x - clamp(x, rx, rx + w)) ** 2 + (y - clamp(y, ry, ry + h)) ** 2 < r * r
   );
 }
-export function step(run, dt) {
+export function capY(obstacle, time, motion = true) {
+  return obstacle.center + (motion ? Math.sin(time * 2.5 + obstacle.center * .017) * 9 : 0);
+}
+export function step(run, dt, motion = true) {
   if (run.phase !== "running") return;
   const config = MODES[run.mode],
     p = run.player;
@@ -89,14 +92,14 @@ export function step(run, dt) {
     o.x -= speed * dt;
     if (
       !o.taken &&
-      Math.hypot(o.x + o.width / 2 - p.x, o.center - p.y) < p.radius + 20
+      Math.hypot(o.x + o.width / 2 - p.x, capY(o, run.time, motion) - p.y) < p.radius + 20
     ) {
       o.taken = true;
       run.caps++;
       run.streak++;
       run.bestStreak = Math.max(run.bestStreak, run.streak);
       p.charge = clamp(p.charge + 0.16, 0, 1);
-      run.events.push({ type: "cap", x: o.x + o.width / 2, y: o.center });
+      run.events.push({ type: "cap", x: o.x + o.width / 2, y: capY(o, run.time, motion) });
     }
     if (!o.passed && o.x + o.width < p.x - p.radius) {
       o.passed = true;
