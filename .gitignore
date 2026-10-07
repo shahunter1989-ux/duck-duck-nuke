@@ -10,3 +10,7 @@ ducky-flap-boost-preview.png
 pip-boy-game-*.png
 github-upload/
 node_modules/
+
+dist/
+artifacts/
+.vercel/
