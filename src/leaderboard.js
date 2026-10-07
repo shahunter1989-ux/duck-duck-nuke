@@ -1,3 +1,4 @@
+import { LOCAL_PREVIEW } from "./release.js";
 import { firebaseConfig } from "./firebase-config.js";
 let connection;
 const VERSION = "10.12.4";
@@ -36,6 +37,7 @@ export function withTimeout(promise, ms = 10000) {
   ]).finally(() => clearTimeout(timer));
 }
 export async function readBoard(mode) {
+  if (LOCAL_PREVIEW) return [];
   return withTimeout(
     (async () => {
       const { api, db } = await connect();
@@ -63,6 +65,7 @@ export async function readBoard(mode) {
   );
 }
 export async function postScore(run, pilot, initials, submissionId) {
+  if (LOCAL_PREVIEW) throw new Error("Public posting is disabled in this local preview.");
   const { api, db } = await withTimeout(connect());
   // Stable per-run ID makes a retry after an uncertain network response non-duplicating.
   const ref = api.doc(db, "leaderboards", run.boardKey, "scores", submissionId);

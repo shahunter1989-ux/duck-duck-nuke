@@ -1,3 +1,4 @@
+import { PILOTS } from "./pilots.js";
 const KEY = "duck-duck-nuke-v2";
 export const defaults = {
   pilot: "ducky",
@@ -14,7 +15,7 @@ export function loadSave() {
     const raw = JSON.parse(localStorage.getItem(KEY) || "{}");
     return {
       ...defaults,
-      pilot: typeof raw.pilot === "string" ? raw.pilot : defaults.pilot,
+      pilot: PILOTS.some(pilot => pilot.id === raw.pilot) ? raw.pilot : defaults.pilot,
       mode: raw.mode === "hard" ? "hard" : "easy",
       sound: raw.sound !== false,
       motion: raw.motion !== false,
