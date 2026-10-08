@@ -91,7 +91,7 @@ export class WorldRenderer {
       ctx.globalAlpha = opacity * (layer ? .88 : .42);
       for (let x = -spacing; x < width + spacing; x += spacing) {
         const px = x - offset, base = layer ? 609 : 594;
-        if (world.weather === 'fireflies') {
+        if (world.weather === 'fireflies' || world.weather === 'breeze') {
           ctx.lineWidth = 3; ctx.strokeStyle = world.shadow;
           for (let reed=0;reed<5;reed++) { ctx.beginPath();ctx.moveTo(px+reed*7,base+18);ctx.quadraticCurveTo(px+reed*6+Math.sin(time+reed)*4,base-14,px+reed*7-7,base-30-reed*2);ctx.stroke(); }
         } else {

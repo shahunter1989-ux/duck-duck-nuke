@@ -738,6 +738,8 @@ dialog h2 {
   color: var(--ink);
   background: var(--lime);
 }
+.roster-tools .segmented { flex-shrink: 1; }
+.roster-tools .segmented button { white-space: nowrap; }
 input {
   background: #111a14;
   border: 1px solid #64725580;

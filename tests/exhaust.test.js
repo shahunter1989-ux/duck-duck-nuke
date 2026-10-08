@@ -6,7 +6,7 @@ import { ENGINES, exhaustState } from '../src/exhaust.js';
 test('every active pilot has an explicit engine setup with valid sprite regions', () => {
   assert.deepEqual(Object.keys(ENGINES).sort(), PILOTS.map(p=>p.id).sort());
   for (const [id, engines] of Object.entries(ENGINES)) {
-    if (['ducky','barkhawk02'].includes(id)) { assert.equal(engines.length,0);continue; }
+    if (['ducky','barkhawk02'].includes(id) || PILOTS.some(p => p.id === id && ['quack','honk'].includes(p.group))) { assert.equal(engines.length,0);continue; }
     assert.ok(engines.length>0,id);
     for (const engine of engines) {
       assert.ok(engine.x>=0 && engine.x<=1 && engine.y>=0 && engine.y<=1,id);

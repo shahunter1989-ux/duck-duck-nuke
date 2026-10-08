@@ -28,10 +28,17 @@ export function pilotVisual(pilot) {
     visual.art = `polished/${pilot.id}-v2.webp`;
     visual.propulsion = pilot.id === 'barkhawk02' ? 'propeller' : 'clean';
   }
-  if (pilot.group === 'alien' || pilot.group === 'halloween') {
+  if (['alien', 'halloween', 'holiday', 'newyear'].includes(pilot.group)) {
     visual.width = 104;
     visual.height = 82;
     visual.propulsion = 'clean';
+  }
+  if (['quack', 'honk'].includes(pilot.group)) {
+    visual.frames = ['01','02','03','04'].map(n => `animation/${pilot.id}/${n}.webp`);
+    visual.art = visual.frames[0];
+    visual.width = pilot.group === 'honk' ? 108 : 98;
+    visual.height = 94;
+    visual.propulsion = 'wings';
   }
   return visual;
 }
