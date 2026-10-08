@@ -19,6 +19,7 @@
       href="./assets/worlds/cinder-junction.webp"
     />
     <link rel="stylesheet" href="./src/style.css" />
+    <link rel="stylesheet" href="./src/crash-sequence.css" />
   </head>
   <body>
     <div class="app" id="app" data-screen="hangar">
@@ -129,7 +130,8 @@
               <h2>PICK YOUR POISON</h2>
               <span>02</span>
             </div>
-            <div class="mode-options" role="group" aria-label="Difficulty">
+            <div class="mode-options" role="group" aria-label="Game mode">
+              <button class="mode" data-mode="dash" aria-pressed="false"><span class="mode-dot"></span><span><strong>CAP DASH</strong><small>60 seconds. Collect caps. Chain combos.</small></span><span class="mode-symbol">60</span></button>
               <button
                 class="mode selected"
                 data-mode="easy"
@@ -246,6 +248,9 @@
         <button data-roster="holiday" aria-pressed="false">HOLIDAY MIX</button>
         <button data-roster="quack" aria-pressed="false">QUACK SQUAD</button>
         <button data-roster="honk" aria-pressed="false">HONK SQUAD</button>
+        <button data-roster="grounded" aria-pressed="false">GROUNDED SQUADRON</button>
+        <button data-roster="jets" aria-pressed="false">JET HANGAR</button>
+        <button data-roster="critters" aria-pressed="false">CRITTER CREW</button>
         <button data-roster="newyear" aria-pressed="false">NEW YEAR CREW</button>
         </div>
         <input
@@ -259,6 +264,13 @@
         Every pilot. Same odds. Pick your kind of chaos.
       </p>
       <div class="pilot-grid" id="pilot-grid"></div>
+    </dialog>
+    <dialog id="crash-dialog" aria-labelledby="crash-title">
+      <p class="eyebrow">A LITTLE SOOT. STILL A LEGEND.</p>
+      <h2 id="crash-title">QUACK… BOOM!</h2>
+      <div class="crash-scene"><img class="crash-cloud" src="./assets/optimized/friendly-cloud.webp" alt="A friendly pastel mushroom cloud"><div class="crash-rescue"><div class="rescue-chute" aria-hidden="true"></div><img id="crash-pilot" alt=""></div></div>
+      <p>Pilot safe. Pride slightly dented.</p>
+      <button id="crash-skip" class="primary">VIEW RESULTS ↗</button>
     </dialog>
     <dialog id="how-dialog" aria-labelledby="how-title">
       <div class="dialog-heading">

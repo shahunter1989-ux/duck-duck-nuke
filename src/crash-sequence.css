@@ -1,0 +1,16 @@
+#crash-dialog { width:min(540px,92vw); text-align:center; overflow:hidden; }
+#crash-dialog::backdrop { background:#091510dc; }
+#crash-dialog h2 { margin:8px 0; font-size:clamp(32px,7vw,54px); color:#ffcf9d; }
+#crash-dialog p { margin:16px 0; }
+#crash-skip { margin-top:10px; }
+.crash-scene { position:relative; height:260px; }
+.crash-cloud { position:absolute; width:290px; height:250px; object-fit:contain; bottom:0; left:50%; transform:translateX(-50%); animation:cloud-bloom .65s ease-out both; }
+.crash-rescue { position:absolute; top:4px; left:50%; width:120px; margin-left:-60px; animation:rescue-drift 2.3s ease-out both; }
+#crash-pilot { width:120px; height:85px; object-fit:contain; position:relative; margin-top:24px; }
+.rescue-chute { width:118px; height:48px; background:repeating-linear-gradient(90deg,#ffe8be 0 23px,#f59d85 23px 47px); border:3px solid #4b3934; border-radius:65px 65px 12px 12px; }
+.rescue-chute::after { content:''; position:absolute; top:47px; left:22px; width:74px; height:38px; border-left:2px solid #fff0c8; border-right:2px solid #fff0c8; transform:perspective(70px) rotateX(-25deg); }
+@keyframes cloud-bloom { from { opacity:0; transform:translateX(-50%) scale(.25); } to { opacity:1; transform:translateX(-50%) scale(1); } }
+@keyframes rescue-drift { 0% { opacity:0; transform:translateY(95px) rotate(-12deg); } 30% { opacity:1; transform:translateY(-8px) rotate(6deg); } 100% { opacity:1; transform:translateY(12px) rotate(-4deg); } }
+.reduced-motion .crash-cloud,.reduced-motion .crash-rescue { animation:none; }
+@media (prefers-reduced-motion:reduce) { .crash-cloud,.crash-rescue { animation:none; } }
+@media (max-height:600px) { .crash-scene { height:165px; } .crash-cloud { height:170px; } .crash-rescue { transform:scale(.75); transform-origin:top center; } }

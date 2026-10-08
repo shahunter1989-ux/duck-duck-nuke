@@ -28,7 +28,7 @@ export function pilotVisual(pilot) {
     visual.art = `polished/${pilot.id}-v2.webp`;
     visual.propulsion = pilot.id === 'barkhawk02' ? 'propeller' : 'clean';
   }
-  if (['alien', 'halloween', 'holiday', 'newyear'].includes(pilot.group)) {
+  if (['alien', 'halloween', 'holiday', 'newyear', 'grounded'].includes(pilot.group)) {
     visual.width = 104;
     visual.height = 82;
     visual.propulsion = 'clean';
@@ -40,6 +40,9 @@ export function pilotVisual(pilot) {
     visual.height = 94;
     visual.propulsion = 'wings';
   }
+  if (pilot.id === 'nitro10') visual.art = 'polished/nitro10-v3.webp';
+  if (pilot.group === 'jets') { visual.width = 112; visual.height = 72; visual.propulsion = 'clean'; }
+  if (pilot.group === 'critters') { visual.width = 98; visual.height = 88; visual.propulsion = 'clean'; }
   return visual;
 }
 export function animationFrame(time, boosted = false) {

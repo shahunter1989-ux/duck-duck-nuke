@@ -18,6 +18,8 @@ export class Sound {
       cap: [720, 1250, 0.16, 0.065, "sine"],
       gate: [360, 520, 0.09, 0.03, "triangle"],
       crash: [110, 30, 0.4, 0.08, "sawtooth"],
+      bump: [150, 90, .12, .035, 'triangle'],
+      complete: [520, 1040, .3, .045, 'sine'],
       click: [440, 650, 0.06, 0.025, "sine"],
       empty: [90, 70, 0.09, 0.035, "triangle"],
     }[type];

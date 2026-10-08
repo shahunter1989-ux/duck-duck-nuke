@@ -57,10 +57,10 @@ export class Renderer {
         x: e.x,
         y: e.y - 22,
         life: 1,
-        text: run.streak > 1 ? `+2 / ${run.streak} STREAK` : "+2 CAPS",
+        text: run.mode === 'dash' ? `+${e.points} / x${Math.min(5,run.streak)}` : run.streak > 1 ? `+2 / ${run.streak} STREAK` : "+2 CAPS",
       });
     }
-    if (e.type === "crash") {
+    if (e.type === "crash" || e.type === 'bump') {
       this.burst(run.player.x, run.player.y, "#ff6738", 36);
       this.shake = 0.28;
     }
