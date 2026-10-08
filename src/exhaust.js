@@ -2,6 +2,7 @@
 // Polished sprites contain no baked flame; each nozzle gets independent live exhaust.
 const jet = (x, y, color = '#ffad4f', size = 1) => ({ x, y, color, size, kind: 'jet' });
 export const ENGINES = {
+  'nuka-marc': [jet(.055,.69,'#ffad66',.9)],
   'falcon-f16': [jet(.05,.55,'#83cfff',.8)],
   'hornet-fa18': [jet(.075,.44,'#ffba66',.65),jet(.065,.55,'#ffba66',.65)],
   'raptor-f22': [jet(.08,.46,'#a8cfff',.6),jet(.07,.59,'#a8cfff',.6)],

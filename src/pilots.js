@@ -1,4 +1,5 @@
 export const PILOTS = [
+  { id: 'nuka-marc', name: 'Nuka Marc', asset: 'nuka-marc', group: 'crew' },
 
   {
     id: "painter",
