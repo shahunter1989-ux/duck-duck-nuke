@@ -1,5 +1,6 @@
 export const WORLD = { width: 960, height: 640, ceiling: 24, floor: 604 };
 export const MODES = {
+  dash: { name: 'CAP DASH', speed: 225, gap: 240, gravity: 820, boost: -322, cost: 0 },
   easy: {
     name: "ROOKIE",
     speed: 218,
@@ -24,6 +25,9 @@ export function createRun(mode = "easy", random = Math.random) {
     random,
     phase: "ready",
     time: 0,
+    remaining: 60,
+    invulnerable: 0,
+    capPoints: 0,
     distance: 0,
     score: 0,
     caps: 0,
@@ -83,10 +87,18 @@ export function step(run, dt, motion = true) {
   const config = MODES[run.mode],
     p = run.player;
   run.time += dt;
+  run.invulnerable = Math.max(0, run.invulnerable - dt);
+  if (run.mode === 'dash') {
+    run.remaining = Math.max(0, 60 - run.time);
+    if (run.remaining <= 0) {
+      run.phase = 'over'; run.cause = 'timer';
+      run.events.push({ type: 'complete' }); return;
+    }
+  }
   p.vy += config.gravity * dt;
   p.y += p.vy * dt;
   p.charge = config.cost ? clamp(p.charge + dt * 0.29, 0, 1) : 1;
-  const speed = config.speed + Math.min(110, run.gates * 3.5);
+  const speed = (config.speed + Math.min(110, run.gates * 3.5)) * (run.invulnerable > 0 ? .65 : 1);
   run.distance += speed * dt * 0.28;
   for (const o of run.obstacles) {
     o.x -= speed * dt;
@@ -98,8 +110,10 @@ export function step(run, dt, motion = true) {
       run.caps++;
       run.streak++;
       run.bestStreak = Math.max(run.bestStreak, run.streak);
+      const points = run.mode === 'dash' ? 10 * Math.min(5, run.streak) : 2;
+      run.capPoints += points;
       p.charge = clamp(p.charge + 0.16, 0, 1);
-      run.events.push({ type: "cap", x: o.x + o.width / 2, y: capY(o, run.time, motion) });
+      run.events.push({ type: "cap", points, x: o.x + o.width / 2, y: capY(o, run.time, motion) });
     }
     if (!o.passed && o.x + o.width < p.x - p.radius) {
       o.passed = true;
@@ -108,7 +122,7 @@ export function step(run, dt, motion = true) {
       run.events.push({ type: "gate" });
     }
   }
-  run.score = Math.floor(run.distance / 100) + run.caps * 2;
+  run.score = run.mode === 'dash' ? run.capPoints : Math.floor(run.distance / 100) + run.caps * 2;
   let cause =
     p.y - p.radius < WORLD.ceiling
       ? "ceiling"
@@ -138,7 +152,15 @@ export function step(run, dt, motion = true) {
     )
       cause = "barrel";
   }
-  if (cause) {
+  if (cause && run.mode === 'dash') {
+    if (!run.invulnerable) {
+      run.streak = 0; run.invulnerable = 1.5;
+      run.events.push({ type: 'bump' });
+    }
+    p.y = clamp(p.y, WORLD.ceiling + p.radius + 1, WORLD.floor - p.radius - 1);
+    if (cause === 'ground') p.vy = config.boost;
+    if (cause === 'ceiling') p.vy = 100;
+  } else if (cause) {
     run.phase = "over";
     run.cause = cause;
     run.events.push({ type: "crash" });

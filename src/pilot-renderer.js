@@ -24,6 +24,7 @@ export class PilotRenderer {
     const scale = Math.min(v.width / image.naturalWidth, v.height / image.naturalHeight);
     const w = image.naturalWidth * scale, h = image.naturalHeight * scale;
     ctx.save(); ctx.translate(p.x, p.y + v.offsetY + (motion && run.phase === 'ready' ? Math.sin(time * 2) * 4 : 0));
+    if (run.invulnerable > 0) ctx.globalAlpha = .65;
     ctx.rotate(this.pitch);
     if (motion) ctx.scale(1 + this.impulse * .025, 1 - this.impulse * .015);
     if (v.frames || v.propulsion === 'propeller') ctx.drawImage(image,-w/2,-h/2,w,h);

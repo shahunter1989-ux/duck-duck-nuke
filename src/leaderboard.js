@@ -37,7 +37,7 @@ export function withTimeout(promise, ms = 10000) {
   ]).finally(() => clearTimeout(timer));
 }
 export async function readBoard(mode) {
-  if (LOCAL_PREVIEW) return [];
+  if (LOCAL_PREVIEW || mode === 'dash') return [];
   return withTimeout(
     (async () => {
       const { api, db } = await connect();
@@ -65,6 +65,7 @@ export async function readBoard(mode) {
   );
 }
 export async function postScore(run, pilot, initials, submissionId) {
+  if (run.mode === 'dash') throw new Error('Cap Dash uses personal records only.');
   if (LOCAL_PREVIEW) throw new Error("Public posting is disabled in this local preview.");
   const { api, db } = await withTimeout(connect());
   // Stable per-run ID makes a retry after an uncertain network response non-duplicating.

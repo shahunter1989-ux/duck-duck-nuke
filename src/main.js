@@ -96,6 +96,7 @@ for (const dialog of document.querySelectorAll("dialog")) {
   dialog.addEventListener("cancel", (event) => {
     event.preventDefault();
     if (dialog.id === "pause-dialog") resume();
+    else if (dialog.id === 'crash-dialog') showResults();
     else if (dialog.id === "result-dialog") home();
     else if (dialog.id === "board-dialog") returnToResultOrClose();
     else closeDialog(dialog);
@@ -122,6 +123,7 @@ function launch() {
   sound.unlock();
   screen = "flight";
   run = createRun(save.mode);
+  document.querySelector('.ready-tip').textContent = run.mode === 'dash' ? '60 seconds. Caps earn 10–50 points. Hits break your combo, not your run.' : 'Fly through the gaps. Red caps are worth +2.';
   lastRun = null;
   lastGateSector = 0;
   $("app").dataset.screen = "flight";
@@ -194,6 +196,7 @@ function finish() {
       ground: "The ground won this round. Boost a little earlier.",
       ceiling: "Too much altitude. Let gravity do a little work.",
       barrel: "A barrel got the last word. Aim for the middle of each gap.",
+      timer: 'Time’s up! Chain caps for up to x5 points. Try to beat your personal best.',
     }[run.cause],
   );
   setText("result-score", run.score);
@@ -201,22 +204,33 @@ function finish() {
   setText("result-caps", run.caps);
   setText("result-streak", run.bestStreak);
   $("save-notice").hidden = saved;
-  resultTimer = setTimeout(() => {
-    if (screen === "flight" && run.phase === "over")
-      openDialog("result-dialog");
-  }, 550);
+  $('result-board').hidden = run.mode === 'dash';
+  if (run.cause === 'timer') {
+    setText('result-title', 'DASH COMPLETE!');
+    openDialog('result-dialog');
+  } else {
+    $('crash-pilot').src = assetUrl(pilotVisual(pilot).art);
+    $('crash-pilot').alt = `${pilot.name} floating safely under a parachute`;
+    openDialog('crash-dialog');
+    resultTimer = setTimeout(showResults, save.motion && !mediaMotion.matches ? 2300 : 1400);
+  }
 }
+function showResults() {
+  clearTimeout(resultTimer);
+  if (screen === 'flight' && run.phase === 'over') openDialog('result-dialog');
+}
+$('crash-skip').addEventListener('click', showResults);
 function consumeEvents() {
   for (const event of run.events.splice(0)) {
     sound.play(event.type);
     renderer?.event(event, run);
-    if (event.type === "crash") finish();
+    if (event.type === "crash" || event.type === 'complete') finish();
   }
 }
 function syncHud() {
   setText("score", padded(run.score));
   setText("caps", String(run.caps).padStart(2, "0"));
-  setText("distance", `${Math.floor(run.distance)} m`);
+  setText("distance", run.mode === 'dash' ? `${Math.ceil(run.remaining)}s LEFT` : `${Math.floor(run.distance)} m`);
   setText("flight-best", `BEST ${padded(save.best[run.mode])}`);
   const location = worldAt(run.gates), sector = location.stage + 1;
   setText("flight-mode", `${run.phase === 'tour' || run.resumePhase === 'tour' && run.phase === 'paused' ? 'SCENIC FLIGHT' : MODES[run.mode].name} / ${location.name.toUpperCase()}`);
@@ -224,7 +238,7 @@ function syncHud() {
   const fuel = Math.round(run.player.charge * 100);
   setText(
     "fuel-label",
-    run.mode === "easy" ? "BOOST / UNLIMITED" : `CORE CHARGE / ${fuel}%`,
+    run.mode === 'dash' ? `${Math.ceil(run.remaining)}s / UNLIMITED BOOST` : run.mode === 'easy' ? 'BOOST / UNLIMITED' : `CORE CHARGE / ${fuel}%`,
   );
   $("fuel-fill").style.width = `${fuel}%`;
   $("fuel-fill").style.backgroundColor = fuel < 20 ? "#ff6738" : "#d6e5a3";
@@ -300,6 +314,13 @@ function renderPilots() {
   }
 }
 async function loadBoard() {
+  if (boardMode === 'dash') {
+    $('score-form').hidden = true; $('board-list').replaceChildren();
+    setText('board-status', `CAP DASH PERSONAL BEST: ${save.best.dash} POINTS. Saved on this device.`);
+    setText('board-reset', 'CAP DASH / PERSONAL RECORD');
+    document.querySelectorAll('[data-board-mode]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    return;
+  }
   if (LOCAL_PREVIEW) { $("score-form").hidden = true; setText("board-status", "Local preview. Public score posting is disabled; personal records stay on this device."); setText("board-reset", "LOCAL FLIGHT LOG"); return; }
   const request = ++boardRequest;
   document

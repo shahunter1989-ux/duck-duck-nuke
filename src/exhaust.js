@@ -2,6 +2,23 @@
 // Polished sprites contain no baked flame; each nozzle gets independent live exhaust.
 const jet = (x, y, color = '#ffad4f', size = 1) => ({ x, y, color, size, kind: 'jet' });
 export const ENGINES = {
+  'falcon-f16': [jet(.05,.55,'#83cfff',.8)],
+  'hornet-fa18': [jet(.075,.44,'#ffba66',.65),jet(.065,.55,'#ffba66',.65)],
+  'raptor-f22': [jet(.08,.46,'#a8cfff',.6),jet(.07,.59,'#a8cfff',.6)],
+  'typhoon': [jet(.05,.53,'#8fe9ec',.85)],
+  'rafale': [jet(.04,.49,'#ffa775',.8)],
+  'gripen': [jet(.04,.50,'#ffe285',.8)],
+  'rivet-raccoon': [jet(.265,.45,'#ffac65',.75)],
+  'captain-capy': [jet(.06,.34,'#ffd45f',.8)],
+  'foxtrot': [jet(.305,.43,'#ff8e62',.7)],
+  'otto-otter': [jet(.26,.31,'#77e6ff',.75)],
+  'poppy-panda': [jet(.295,.44,'#ffb78e',.7)],
+  'jetpack-penguin': [jet(.065,.345,'#8ae8ff',.8)],
+  'jetpack-kiwi': [jet(.065,.455,'#ffbf75',.65)],
+  'jetpack-ostrich': [jet(.315,.385,'#ff8657',1)],
+  'jetpack-emu': [jet(.265,.414,'#ffac54',.85)],
+  'jetpack-cassowary': [jet(.175,.40,'#62cfff',.9)],
+  'jetpack-kakapo': [jet(.065,.40,'#aeffa5',.7)],
   'mallard': [],
   'wood-duck': [],
   'mandarin-duck': [],
@@ -87,7 +104,7 @@ export const ENGINES = {
   astro07: [jet(.016,.592,'#94e6ff',.8)],
   scrappy08: [jet(.023,.601,'#ffad4f',.75)],
   peanut09: [jet(.02,.61,'#ffc5df',.8)],
-  nitro10: [jet(.075,.708,'#ffad4f',.75)],
+  nitro10: [jet(.08,.65,'#ffad4f',.75)],
 };
 
 export function exhaustState(time, power, motion = true, seed = 0) {

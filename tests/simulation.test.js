@@ -12,8 +12,8 @@ import { boardKey, cleanCallsign } from "../src/leaderboard.js";
 import { PILOTS } from "../src/pilots.js";
 import { existsSync } from "node:fs";
 test("all available pilots have shipping art and unique identities", () => {
-  assert.equal(PILOTS.length, 85);
-  assert.equal(new Set(PILOTS.map((p) => p.id)).size, 85);
+  assert.equal(PILOTS.length, 102);
+  assert.equal(new Set(PILOTS.map((p) => p.id)).size, 102);
   for (const p of PILOTS)
     assert.ok(existsSync(`assets/optimized/${p.asset}.webp`), p.asset);
 });
@@ -135,7 +135,7 @@ test("malformed or unavailable device storage cannot prevent boot", () => {
       mode: "bad",
       runs: Infinity,
     });
-  assert.deepEqual(loadSave().best, { easy: 0, hard: 0 });
+  assert.deepEqual(loadSave().best, { easy: 0, hard: 0, dash: 0 });
   assert.equal(loadSave().runs, 0);
   delete globalThis.localStorage;
 });
