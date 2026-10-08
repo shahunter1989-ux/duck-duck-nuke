@@ -1,0 +1,7 @@
+# Nuka Marc
+
+Approved Wasteland Mechanic concept, right-facing with a slight turn toward the viewer. Added locally to Nuke Crew. Source retained in assets/polished; runtime sprite in assets/optimized.
+
+## Sprite prompt
+
+Create the final transparent game sprite from the RIGHT HAND rocket-riding view of this approved concept. ONLY ONE man riding ONE rocket, no standing figure, no concept sheet, no background or ground shadow. Preserve the exact mature Nuka Marc identity, white gray beard and mustache, red cream Nuka-Cola baseball cap, weathered cream and red one-piece vault mechanic jumpsuit, tools, boots, gloves, and rugged riveted cream red rocket with exposed pipes, fins, Nuka-Cola lettering and NC1 emblem. Rocket faces RIGHT. Adjust head from strict profile to a natural three-quarter angle: still mostly facing RIGHT toward the nose but turned slightly toward VIEWER so both eyes and more of his face are visible, subtle confident smile. Do not turn fully toward camera or look backward. Natural comfortable seated pose, both hands on grips, bent knees and boots on footrests. Premium clean illustrated game sprite with defined outlines and dimensional shading. Entire rocket and rider fit with transparent margin. Rear engine nozzle points LEFT, unobstructed, NO baked flames or smoke (animated in game). No canopy.

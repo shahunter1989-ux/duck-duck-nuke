@@ -1,6 +1,7 @@
 // Render-only calibration. Collision geometry is identical for every pilot.
 const polishedPilots = new Set(["painter","bigzx","wyldwolf","mayra","youyosong","coconut","bigndn1988","retrochick24","sharkbite07","dukequackem","quackshot01","thunderbill02","dustdart03","mallardstorm04","eggburner05","nightbeak06","sunfin07","buzzbill08","warwaddler09","novaquack10","ace01","barkhawk02","spark03","copilot04","howler05","rocket06","astro07","scrappy08","peanut09","nitro10"]);
 const overrides = {
+  'nuka-marc': { width: 108, height: 86, propulsion: 'clean' },
   mm777: { art: 'polished/mm777-v2.webp', width: 105, height: 72, propulsion: 'clean', color: '#ffad4f' },
   jag: { art: 'polished/jag-label.webp', width: 100, height: 84, propulsion: 'clean', color: '#ff8dc9' },
   ducky: { art: 'animation/ducky/01.webp', frames: ['01', '02', '03', '04'].map(n => `animation/ducky/${n}.webp`), width: 90, height: 90, offsetY: -11, propulsion: 'wings', nozzle: [-.29, .12] },

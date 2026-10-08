@@ -12,8 +12,8 @@ import { boardKey, cleanCallsign } from "../src/leaderboard.js";
 import { PILOTS } from "../src/pilots.js";
 import { existsSync } from "node:fs";
 test("all available pilots have shipping art and unique identities", () => {
-  assert.equal(PILOTS.length, 102);
-  assert.equal(new Set(PILOTS.map((p) => p.id)).size, 102);
+  assert.equal(PILOTS.length, 103);
+  assert.equal(new Set(PILOTS.map((p) => p.id)).size, 103);
   for (const p of PILOTS)
     assert.ok(existsSync(`assets/optimized/${p.asset}.webp`), p.asset);
 });

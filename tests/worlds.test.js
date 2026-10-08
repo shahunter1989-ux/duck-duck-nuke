@@ -36,8 +36,8 @@ test('locations change every eight gates and repeat after a complete route', () 
   assert.equal(worldAt(256).id, WORLDS[0].id);
   for (const input of [-1,NaN,Infinity]) assert.equal(worldAt(input).index,0);
 });
-test('all 102 pilots, animation frames, and world artwork ship locally', () => {
-  assert.equal(PILOTS.length,102);
+test('all 103 pilots, animation frames, and world artwork ship locally', () => {
+  assert.equal(PILOTS.length,103);
   for (const pilot of PILOTS) {
     const visual=pilotVisual(pilot);
     for (const path of [visual.art,...visual.frames||[]]) assert.ok(existsSync(new URL(assetUrl(path))),path);
